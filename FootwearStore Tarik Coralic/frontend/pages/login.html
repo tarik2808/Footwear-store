@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+  
+</head>
+<body>
+  <!-- Navigation -->
+  <header id="navbar">
+    <nav>
+      <button id="menu-toggle" class="hamburger">&#9776;</button> <!-- Hamburger button -->
+      <a href="../index.html">Home</a>
+      <div class="dropdown" id="categories-dropdown">
+        <button class="dropbtn" onclick="disableCategories()">Categories</button>
+        <div class="dropdown-content">
+          <a href="sneakers.html">Sneakers</a>
+          <a href="shoes.html">Shoes</a>
+          <a href="boots.html">Boots</a>
+          <a href="slippers.html" class="active">Slippers</a>
+          <a href="formal-shoes.html">Formal shoes</a>
+        </div>
+      </div>
+      <a href="cart.html">Cart</a>
+      <a href="user-profile.html">Profile</a>
+      <a href="admin-dashboard.html" id="admin-dashboard-btn" style="display: none;">Admin Dashboard</a>
+
+      <div class="auth-links">
+        <a href="login.html" id="login-btn">Login</a>
+        <a href="register.html" id="register-btn">Register</a>
+        <a href="#" id="logout-btn" class="hidden">Logout</a> 
+      </div>
+    </nav>
+  </header>
+
+  <main class="login-container">
+    <div class="login-box">
+      <h2>Login</h2>
+      <form id="login-form">
+        <div class="input-group">
+          <label for="email">Email</label>
+          <input type="text" id="email" name="email" required>
+        </div>
+
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" required>
+        </div>
+
+        <button type="submit" class="btn-login">Login</button>
+      </form>
+
+      <p class="register-link">Don't have an account? <a href="register.html">Register here</a></p>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 Footwear Store. All rights reserved.</p>
+</footer>
+
+  <!-- Reference the external login.js file -->
+  <script src="../assets/js/login.js"></script>
+  <script src="../assets/js/navbar.js"></script> 
+</body>
+</html>

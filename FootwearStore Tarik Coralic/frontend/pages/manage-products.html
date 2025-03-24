@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Products</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header id="navbar">
+    <nav>
+      <button id="menu-toggle" class="hamburger">&#9776;</button>
+      <a href="../index.html">Home</a>
+      <div class="dropdown" id="categories-dropdown">
+        <button class="dropbtn" onclick="disableCategories()">Categories</button>
+        <div class="dropdown-content">
+          <a href="sneakers.html">Sneakers</a>
+          <a href="shoes.html">Shoes</a>
+          <a href="boots.html">Boots</a>
+          <a href="slippers.html">Slippers</a>
+          <a href="formal-shoes.html">Formal shoes</a>
+        </div>
+      </div>
+      <a href="cart.html">Cart</a>
+      <a href="user-profile.html">Profile</a>
+      <a href="admin-dashboard.html" class="active">Admin Dashboard</a>
+      <div class="auth-links">
+        <a href="login.html" id="login-btn">Login</a>
+        <a href="register.html" id="register-btn">Register</a>
+        <a href="#" id="logout-btn" class="hidden">Logout</a> 
+      </div>
+    </nav>
+  </header>
+
+  <main class="admin-container">
+    <h2>Manage Products</h2>
+    <button id="add-product-btn" class="btn">Add New Product</button>
+    <section id="products-list">
+      <!-- Products will be displayed here -->
+    </section>
+  </main>
+
+  <!-- Add/Edit Product Modal -->
+  <div id="product-modal" class="modal">
+    <div class="modal-content">
+      <h3 id="modal-title">Add New Product</h3>
+      <form id="add-product-form">
+        <div class="form-group">
+          <label for="product-name">Product Name</label>
+          <input type="text" id="product-name" required>
+        </div>
+        <div class="form-group">
+          <label for="product-description">Description</label>
+          <textarea id="product-description" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="product-price">Price</label>
+          <input type="number" id="product-price" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="product-category">Category</label>
+          <select id="product-category" required>
+            <option value="">Select a category</option>
+            <option value="sneakers">Sneakers</option>
+            <option value="shoes">Shoes</option>
+            <option value="boots">Boots</option>
+            <option value="slippers">Slippers</option>
+            <option value="formal-shoes">Formal Shoes</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="product-image">Product Image</label>
+          <input type="file" id="product-image" accept="image/*" required>
+        </div>
+        <div class="form-buttons">
+          <button type="submit" class="btn">Save Product</button>
+          <button type="button" class="btn cancel" id="cancel-btn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 Footwear Store. All rights reserved.</p>
+  </footer>
+
+  <script src="../assets/js/navbar.js"></script>
+  <script src="../assets/js/manage-products.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <header id="navbar">
+    <nav>
+      <button id="menu-toggle" class="hamburger">&#9776;</button> <!-- Hamburger button -->
+      <a href="../index.html">Home</a>
+      <div class="dropdown" id="categories-dropdown">
+        <button class="dropbtn" onclick="disableCategories()">Categories</button>
+        <div class="dropdown-content">
+          <a href="sneakers.html">Sneakers</a>
+          <a href="shoes.html">Shoes</a>
+          <a href="boots.html">Boots</a>
+          <a href="slippers.html" class="active">Slippers</a>
+          <a href="formal-shoes.html">Formal shoes</a>
+        </div>
+      </div>
+      <a href="cart.html">Cart</a>
+      <a href="user-profile.html">Profile</a>
+      <a href="admin-dashboard.html" id="admin-dashboard-btn" style="display: none;">Admin Dashboard</a>
+
+      <div class="auth-links">
+        <a href="login.html" id="login-btn">Login</a>
+        <a href="register.html" id="register-btn">Register</a>
+        <a href="#" id="logout-btn" class="hidden">Logout</a> 
+      </div>
+    </nav>
+  </header>
+  <script src="../assets/js/checkout.js"></script>
+
+  <main class="checkout-container">
+    <h2>Checkout</h2>
+
+    <div id="checkout-summary">
+      <h3>Total to Pay: <span id="checkout-total">$0.00</span></h3>
+    </div>
+    
+    <form action="#" method="post" id="checkout-form">
+      <fieldset>
+        <legend>Shipping Information</legend>
+        
+        <label for="full-name">Full Name:</label>
+        <input type="text" id="full-name" name="full-name" placeholder="Enter your name and surname" required>
+
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" placeholder="Enter your address" required>
+
+        <label for="phone-number">Phone Number:</label>
+        <input type="tel" id="phone-number" name="phone-number" pattern="^\+?[0-9]{10,15}$" placeholder="Enter your phone number" required>
+  
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" placeholder="Enter your city" required>
+
+        <label for="zip-code">Zip Code:</label>
+        <input type="text" id="zip-code" name="zip-code" placeholder="Enter your zip code" required>
+      </fieldset>
+
+      <fieldset>
+        <legend>Payment Information</legend>
+        
+        <!-- Only Cash on Delivery (COD) option is available -->
+        <label for="payment-method">Payment Method:</label>
+        <select id="payment-method" name="payment-method">
+          <option value="cod" selected>Cash on Delivery</option>
+        </select>
+
+        <!-- Cash on Delivery (COD) Info -->
+        <div id="cod-info" class="payment-fields" style="display: block;">
+          <p><strong>Note:</strong> You will pay for your order in cash when the package arrives at your address. Please make sure to have the correct amount ready for the delivery.</p>
+        </div>
+      </fieldset>
+
+      <button type="submit">Complete Purchase</button>
+    </form>
+  </main>
+
+  <footer>
+    <p>© 2025 Footwear Store. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
