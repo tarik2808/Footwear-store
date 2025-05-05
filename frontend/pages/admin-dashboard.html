@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <header id="navbar">
+    <nav>
+      <button id="menu-toggle" class="hamburger">&#9776;</button> <!-- Hamburger button -->
+      <a href="../index.html">Home</a>
+      <div class="dropdown" id="categories-dropdown">
+        <button class="dropbtn" onclick="disableCategories()">Categories</button>
+        <div class="dropdown-content">
+          <a href="sneakers.html">Sneakers</a>
+          <a href="shoes.html">Shoes</a>
+          <a href="boots.html">Boots</a>
+          <a href="slippers.html" class="active">Slippers</a>
+          <a href="formal-shoes.html">Formal Shoes</a>
+        </div>
+      </div>
+      <a href="cart.html">Cart</a>
+      <a href="user-profile.html">Profile</a>
+      <a href="admin-dashboard.html" id="admin-dashboard-btn" style="display: none;">Admin Dashboard</a>
+
+      <div class="auth-links">
+        <a href="login.html" id="login-btn">Login</a>
+        <a href="register.html" id="register-btn">Register</a>
+        <a href="#" id="logout-btn" class="hidden">Logout</a> 
+      </div>
+    </nav>
+  </header>
+
+  <main class="dashboard-container">
+    <h2>Admin Dashboard</h2>
+    <section id="admin-panel">
+      <div class="admin-card" id="manage-products">
+        <h3>Manage Products</h3>
+        <p>Add, edit, or remove products.</p>
+        <a href="manage-products.html" class="btn">Go to Manage Products</a>
+      </div>
+
+      <!-- Manage Users button following the same pattern as Manage Products -->
+      <div class="admin-card" id="manage-users">
+        <h3>Manage Users</h3>
+        <p>View and control user accounts.</p>
+        <a href="manage-users.html" class="btn">Go to Manage Users</a>
+      </div>
+
+      <div class="admin-card" id="manage-users">
+        <h3>Manage Orders</h3>
+        <p>Track and update order statuses.</p>
+        <a href="manage-orders.html" class="btn">Go to Manage Orders</a>
+      </div>
+
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 Footwear Store. All rights reserved.</p>
+</footer>
+
+  <script src="../assets/js/navbar.js"></script> 
+  <script src="../assets/js/admin-dashboard.js"></script> 
+</body>
+</html>
