@@ -1,178 +1,213 @@
 <?php
 require_once __DIR__ . '/../dao/ProductDAO.php';
+require_once __DIR__ . '/../dao/CategoryDAO.php';
 
 class ProductService {
     private $productDAO;
+    private $categoryDAO;
 
     public function __construct() {
         $this->productDAO = new ProductDAO();
+        $this->categoryDAO = new CategoryDAO();
     }
 
+    // Create new product
     public function createProduct($productData) {
-        // Validate input
-        if(empty($productData->name) || empty($productData->price) || 
-           empty($productData->stock) || empty($productData->category_id)) {
-            return array("success" => false, "message" => "All fields are required");
-        }
+        try {
+            // Validate required fields
+            if (empty($productData['name']) || empty($productData['description']) || 
+                empty($productData['price']) || empty($productData['category_id'])) {
+                throw new Exception("All fields are required");
+            }
 
-        // Validate price and stock
-        if(!is_numeric($productData->price) || $productData->price <= 0) {
-            return array("success" => false, "message" => "Invalid price");
-        }
+            // Validate price
+            if (!is_numeric($productData['price']) || $productData['price'] <= 0) {
+                throw new Exception("Price must be a positive number");
+            }
 
-        if(!is_numeric($productData->stock) || $productData->stock < 0) {
-            return array("success" => false, "message" => "Invalid stock quantity");
-        }
+            // Validate stock
+            if (!empty($productData['stock']) && (!is_numeric($productData['stock']) || $productData['stock'] < 0)) {
+                throw new Exception("Stock must be a non-negative number");
+            }
 
-        if($this->productDAO->create($productData)) {
-            return array("success" => true, "message" => "Product created successfully");
+            // Check if category exists
+            $category = $this->categoryDAO->readOne($productData['category_id']);
+            if (!$category) {
+                throw new Exception("Category not found");
+            }
+
+            // Create product object
+            $product = new stdClass();
+            $product->name = $productData['name'];
+            $product->description = $productData['description'];
+            $product->price = $productData['price'];
+            $product->stock = $productData['stock'] ?? 0;
+            $product->category_id = $productData['category_id'];
+
+            // Create product in database
+            $productId = $this->productDAO->create($product);
+            if (!$productId) {
+                throw new Exception("Failed to create product");
+            }
+
+            return $this->getProduct($productId);
+        } catch (Exception $e) {
+            error_log("Product creation error: " . $e->getMessage());
+            throw $e;
         }
-        return array("success" => false, "message" => "Failed to create product");
     }
 
-    public function getAllProducts($min_price = null, $max_price = null, $search = null, $page = 1, $limit = 10, $sort_by = 'name', $sort_order = 'ASC') {
+    // Get product by ID
+    public function getProduct($productId) {
         try {
-            $offset = ($page - 1) * $limit;
-            $products = $this->productDAO->readAllWithFilters($min_price, $max_price, $search, $offset, $limit, $sort_by, $sort_order);
-            $total = $this->productDAO->getTotalCount($min_price, $max_price, $search);
-            
+            $product = $this->productDAO->readOne($productId);
+            if (!$product) {
+                throw new Exception("Product not found");
+            }
+            return $product;
+        } catch (Exception $e) {
+            error_log("Error getting product: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    // List products with filters and pagination
+    public function listProducts($page = 1, $limit = 10, $filters = []) {
+        try {
+            $products = $this->productDAO->readAll($page, $limit, $filters);
+            $total = $this->productDAO->getTotalCount($filters);
+
             return [
-                'success' => true,
                 'products' => $products,
-                'pagination' => [
-                    'page' => $page,
-                    'limit' => $limit,
-                    'total' => $total,
-                    'total_pages' => ceil($total / $limit)
-                ],
-                'sorting' => [
-                    'sort_by' => $sort_by,
-                    'sort_order' => $sort_order
-                ]
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit
             ];
         } catch (Exception $e) {
-            error_log("Error in getAllProducts: " . $e->getMessage());
-            return ['success' => false, 'message' => 'Error retrieving products'];
+            error_log("Error listing products: " . $e->getMessage());
+            throw $e;
         }
     }
 
-    public function getProductsByCategory($category_id, $min_price = null, $max_price = null, $search = null, $page = 1, $limit = 10, $sort_by = 'name', $sort_order = 'ASC') {
+    // Update product
+    public function updateProduct($productId, $productData) {
         try {
-            $offset = ($page - 1) * $limit;
-            $products = $this->productDAO->readAllWithFilters($min_price, $max_price, $search, $offset, $limit, $sort_by, $sort_order, $category_id);
-            $total = $this->productDAO->getTotalCount($min_price, $max_price, $search, $category_id);
-            
-            return [
-                'success' => true,
-                'products' => $products,
-                'pagination' => [
-                    'page' => $page,
-                    'limit' => $limit,
-                    'total' => $total,
-                    'total_pages' => ceil($total / $limit)
-                ],
-                'sorting' => [
-                    'sort_by' => $sort_by,
-                    'sort_order' => $sort_order
-                ]
-            ];
+            // Check if product exists
+            $existingProduct = $this->productDAO->readOne($productId);
+            if (!$existingProduct) {
+                throw new Exception("Product not found");
+            }
+
+            // Validate price if provided
+            if (!empty($productData['price']) && (!is_numeric($productData['price']) || $productData['price'] <= 0)) {
+                throw new Exception("Price must be a positive number");
+            }
+
+            // Validate stock if provided
+            if (!empty($productData['stock']) && (!is_numeric($productData['stock']) || $productData['stock'] < 0)) {
+                throw new Exception("Stock must be a non-negative number");
+            }
+
+            // Check if category exists if provided
+            if (!empty($productData['category_id'])) {
+                $category = $this->categoryDAO->readOne($productData['category_id']);
+                if (!$category) {
+                    throw new Exception("Category not found");
+                }
+            }
+
+            // Update product object
+            $product = new stdClass();
+            $product->id = $productId;
+            $product->name = $productData['name'] ?? null;
+            $product->description = $productData['description'] ?? null;
+            $product->price = $productData['price'] ?? null;
+            $product->stock = $productData['stock'] ?? null;
+            $product->category_id = $productData['category_id'] ?? null;
+
+            if (!$this->productDAO->update($product)) {
+                throw new Exception("Failed to update product");
+            }
+
+            return $this->getProduct($productId);
         } catch (Exception $e) {
-            error_log("Error in getProductsByCategory: " . $e->getMessage());
-            return ['success' => false, 'message' => 'Error retrieving products by category'];
+            error_log("Error updating product: " . $e->getMessage());
+            throw $e;
         }
     }
 
-    public function getProductById($id) {
-        $result = $this->productDAO->readOne($id);
-        
-        if($result->rowCount() > 0) {
-            $product = $result->fetch(PDO::FETCH_ASSOC);
-            return array("success" => true, "product" => $product);
+    // Delete product
+    public function deleteProduct($productId) {
+        try {
+            // Check if product exists
+            $product = $this->productDAO->readOne($productId);
+            if (!$product) {
+                throw new Exception("Product not found");
+            }
+
+            if (!$this->productDAO->delete($productId)) {
+                throw new Exception("Failed to delete product");
+            }
+
+            return true;
+        } catch (Exception $e) {
+            error_log("Error deleting product: " . $e->getMessage());
+            throw $e;
         }
-        
-        return array("success" => false, "message" => "Product not found");
     }
 
-    public function updateProduct($productData) {
-        // Validate input
-        if(empty($productData->id) || empty($productData->name) || 
-           empty($productData->price) || empty($productData->stock) || 
-           empty($productData->category_id)) {
-            return array("success" => false, "message" => "All fields are required");
-        }
+    // Update product stock
+    public function updateStock($productId, $quantity) {
+        try {
+            if (!is_numeric($quantity)) {
+                throw new Exception("Quantity must be a number");
+            }
 
-        // Validate price and stock
-        if(!is_numeric($productData->price) || $productData->price <= 0) {
-            return array("success" => false, "message" => "Invalid price");
-        }
+            if (!$this->productDAO->updateStock($productId, $quantity)) {
+                throw new Exception("Failed to update stock");
+            }
 
-        if(!is_numeric($productData->stock) || $productData->stock < 0) {
-            return array("success" => false, "message" => "Invalid stock quantity");
+            return $this->getProduct($productId);
+        } catch (Exception $e) {
+            error_log("Error updating stock: " . $e->getMessage());
+            throw $e;
         }
-
-        if($this->productDAO->update($productData)) {
-            return array("success" => true, "message" => "Product updated successfully");
-        }
-        return array("success" => false, "message" => "Failed to update product");
     }
 
-    public function deleteProduct($id) {
-        if($this->productDAO->delete($id)) {
-            return array("success" => true, "message" => "Product deleted successfully");
-        }
-        return array("success" => false, "message" => "Failed to delete product");
-    }
-
-    public function updateStock($id, $quantity) {
-        if($this->productDAO->updateStock($id, $quantity)) {
-            return array("success" => true, "message" => "Stock updated successfully");
-        }
-        return array("success" => false, "message" => "Failed to update stock");
-    }
-
+    // Bulk create products
     public function bulkCreateProducts($products) {
         try {
-            foreach ($products as $product) {
-                if (!$this->validateProduct($product)) {
-                    return ['success' => false, 'message' => 'Invalid product data'];
-                }
+            if (!is_array($products) || empty($products)) {
+                throw new Exception("Products array is required");
             }
-            
-            $result = $this->productDAO->bulkCreate($products);
-            return ['success' => true, 'message' => 'Products created successfully', 'products' => $result];
+
+            if (!$this->productDAO->bulkCreate($products)) {
+                throw new Exception("Failed to create products");
+            }
+
+            return true;
         } catch (Exception $e) {
-            error_log("Error in bulkCreateProducts: " . $e->getMessage());
-            return ['success' => false, 'message' => 'Error creating products'];
+            error_log("Error in bulk create: " . $e->getMessage());
+            throw $e;
         }
     }
 
+    // Bulk update products
     public function bulkUpdateProducts($products) {
         try {
-            foreach ($products as $product) {
-                if (!isset($product->id) || !$this->validateProduct($product)) {
-                    return ['success' => false, 'message' => 'Invalid product data'];
-                }
+            if (!is_array($products) || empty($products)) {
+                throw new Exception("Products array is required");
             }
-            
-            $result = $this->productDAO->bulkUpdate($products);
-            return ['success' => true, 'message' => 'Products updated successfully', 'products' => $result];
-        } catch (Exception $e) {
-            error_log("Error in bulkUpdateProducts: " . $e->getMessage());
-            return ['success' => false, 'message' => 'Error updating products'];
-        }
-    }
 
-    private function validateProduct($product) {
-        return isset($product->name) && 
-               isset($product->description) && 
-               isset($product->price) && 
-               isset($product->stock) && 
-               isset($product->category_id) &&
-               strlen($product->name) <= 255 &&
-               strlen($product->description) <= 1000 &&
-               is_numeric($product->price) &&
-               is_numeric($product->stock) &&
-               is_numeric($product->category_id);
+            if (!$this->productDAO->bulkUpdate($products)) {
+                throw new Exception("Failed to update products");
+            }
+
+            return true;
+        } catch (Exception $e) {
+            error_log("Error in bulk update: " . $e->getMessage());
+            throw $e;
+        }
     }
 }
 ?> 

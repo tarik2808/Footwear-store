@@ -8,99 +8,181 @@ class UserService {
         $this->userDAO = new UserDAO();
     }
 
-    public function register($userData) {
-        // Validate input
-        if(empty($userData->name) || empty($userData->email) || empty($userData->password)) {
-            return array("success" => false, "message" => "All fields are required");
-        }
+    private function validateUser($data, $isUpdate = false) {
+        $errors = [];
 
-        // Validate email format
-        if(!filter_var($userData->email, FILTER_VALIDATE_EMAIL)) {
-            return array("success" => false, "message" => "Invalid email format");
-        }
-
-        // Hash password
-        $userData->password = password_hash($userData->password, PASSWORD_DEFAULT);
-        
-        // Set default role
-        $userData->role = "user";
-
-        // Create user
-        if($this->userDAO->create($userData)) {
-            return array("success" => true, "message" => "User registered successfully");
-        }
-        return array("success" => false, "message" => "Failed to register user");
-    }
-
-    public function login($email, $password) {
-        // Validate input
-        if(empty($email) || empty($password)) {
-            return array("success" => false, "message" => "Email and password are required");
-        }
-
-        // Get user
-        $result = $this->userDAO->login($email, $password);
-        
-        if($result->rowCount() > 0) {
-            $user = $result->fetch(PDO::FETCH_ASSOC);
-            
-            // Verify password
-            if(password_verify($password, $user['password'])) {
-                // Remove password from response
-                unset($user['password']);
-                return array("success" => true, "user" => $user);
+        // Required fields
+        if (!$isUpdate) {
+            if (empty($data->name)) {
+                $errors[] = "Name is required";
+            }
+            if (empty($data->email)) {
+                $errors[] = "Email is required";
+            }
+            if (empty($data->password)) {
+                $errors[] = "Password is required";
             }
         }
-        
-        return array("success" => false, "message" => "Invalid email or password");
+
+        // Email format
+        if (!empty($data->email) && !filter_var($data->email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = "Invalid email format";
+        }
+
+        // Password strength
+        if (!empty($data->password)) {
+            if (strlen($data->password) < 8) {
+                $errors[] = "Password must be at least 8 characters long";
+            }
+            if (!preg_match("/[A-Z]/", $data->password)) {
+                $errors[] = "Password must contain at least one uppercase letter";
+            }
+            if (!preg_match("/[a-z]/", $data->password)) {
+                $errors[] = "Password must contain at least one lowercase letter";
+            }
+            if (!preg_match("/[0-9]/", $data->password)) {
+                $errors[] = "Password must contain at least one number";
+            }
+            if (!preg_match("/[^A-Za-z0-9]/", $data->password)) {
+                $errors[] = "Password must contain at least one special character";
+            }
+        }
+
+        // Name validation
+        if (!empty($data->name)) {
+            if (strlen($data->name) < 2) {
+                $errors[] = "Name must be at least 2 characters long";
+            }
+            if (strlen($data->name) > 50) {
+                $errors[] = "Name must not exceed 50 characters";
+            }
+            if (!preg_match("/^[a-zA-Z\s]+$/", $data->name)) {
+                $errors[] = "Name can only contain letters and spaces";
+            }
+        }
+
+        if (!empty($errors)) {
+            throw new Exception(implode(", ", $errors));
+        }
     }
 
-    public function getUserById($id) {
-        $result = $this->userDAO->readOne($id);
-        
-        if($result->rowCount() > 0) {
-            $user = $result->fetch(PDO::FETCH_ASSOC);
+    // Register a new user
+    public function register($data) {
+        try {
+            $this->validateUser($data);
+            
+            if ($this->userDAO->emailExists($data->email)) {
+                throw new Exception("Email already exists");
+            }
+
+            $data->password = password_hash($data->password, PASSWORD_DEFAULT);
+            $data->role = 'user'; // Default role
+
+            return $this->userDAO->create($data);
+        } catch (Exception $e) {
+            throw new Exception("Registration failed: " . $e->getMessage());
+        }
+    }
+
+    // Login user
+    public function login($email, $password) {
+        try {
+            $user = $this->userDAO->login($email);
+            if (!$user || !password_verify($password, $user['password'])) {
+                throw new Exception("Invalid credentials");
+            }
             unset($user['password']);
-            return array("success" => true, "user" => $user);
+            return $user;
+        } catch (Exception $e) {
+            throw new Exception("Login failed: " . $e->getMessage());
         }
-        
-        return array("success" => false, "message" => "User not found");
     }
 
-    public function updateUser($userData) {
-        // Validate input
-        if(empty($userData->id) || empty($userData->name) || empty($userData->email)) {
-            return array("success" => false, "message" => "Required fields are missing");
+    // Get user profile
+    public function getProfile($userId) {
+        try {
+            $user = $this->userDAO->readOne($userId);
+            if (!$user) {
+                throw new Exception("User not found");
+            }
+            unset($user['password']);
+            return $user;
+        } catch (Exception $e) {
+            throw new Exception("Failed to get profile: " . $e->getMessage());
         }
-
-        // If password is provided, hash it
-        if(!empty($userData->password)) {
-            $userData->password = password_hash($userData->password, PASSWORD_DEFAULT);
-        }
-
-        if($this->userDAO->update($userData)) {
-            return array("success" => true, "message" => "User updated successfully");
-        }
-        return array("success" => false, "message" => "Failed to update user");
     }
 
-    public function deleteUser($id) {
-        if($this->userDAO->delete($id)) {
-            return array("success" => true, "message" => "User deleted successfully");
+    // Update user profile
+    public function updateProfile($userId, $data) {
+        try {
+            $this->validateUser($data, true);
+            
+            if (isset($data->email) && $this->userDAO->emailExists($data->email, $userId)) {
+                throw new Exception("Email already exists");
+            }
+
+            if (isset($data->password) && !empty($data->password)) {
+                $data->password = password_hash($data->password, PASSWORD_DEFAULT);
+            } else {
+                if (is_array($data) && array_key_exists('password', $data)) {
+                    unset($data['password']);
+                } elseif (is_object($data) && property_exists($data, 'password')) {
+                    unset($data->password);
+                }
+            }
+
+            $data->id = $userId;
+            $user = $this->userDAO->update($data);
+            if (!$user) {
+                throw new Exception("Failed to update profile");
+            }
+            if (is_array($user) && isset($user['password'])) {
+                unset($user['password']);
+            } elseif (is_object($user) && isset($user->password)) {
+                unset($user->password);
+            }
+            return $user;
+        } catch (Exception $e) {
+            throw new Exception("Failed to update profile: " . $e->getMessage());
         }
-        return array("success" => false, "message" => "Failed to delete user");
     }
 
-    public function getAllUsers() {
-        $result = $this->userDAO->readAll();
-        $users = array();
-        
-        while($row = $result->fetch(PDO::FETCH_ASSOC)) {
-            unset($row['password']);
-            $users[] = $row;
+    // Delete user account
+    public function deleteAccount($userId) {
+        try {
+            if (!$this->userDAO->delete($userId)) {
+                throw new Exception("Failed to delete account");
+            }
+        } catch (Exception $e) {
+            throw new Exception("Failed to delete account: " . $e->getMessage());
         }
-        
-        return array("success" => true, "users" => $users);
+    }
+
+    // List users (admin only)
+    public function listUsers($page = 1, $limit = 10, $filters = []) {
+        try {
+            $total = $this->userDAO->getTotalCount($filters);
+            $users = $this->userDAO->readAll($page, $limit, $filters);
+            if (!is_array($users)) {
+                $users = [];
+            }
+            foreach ($users as &$user) {
+                if (is_array($user) && array_key_exists('password', $user)) {
+                    unset($user['password']);
+                } elseif (is_object($user) && property_exists($user, 'password')) {
+                    unset($user->password);
+                }
+            }
+
+            return [
+                'users' => $users,
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit
+            ];
+        } catch (Exception $e) {
+            throw new Exception("Failed to list users: " . $e->getMessage());
+        }
     }
 }
 ?> 

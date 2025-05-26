@@ -6,6 +6,7 @@ header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 require_once __DIR__ . '/../services/UserService.php';
+require_once __DIR__ . '/../services/AuthService.php';
 
 $userService = new UserService();
 
@@ -22,12 +23,14 @@ switch($method) {
     case 'POST':
         if($endpoint == 'user' && isset($request[1]) && $request[1] == 'register') {
             $data = json_decode(file_get_contents("php://input"));
+            $data->role = isset($data->role) ? $data->role : 'user';
             $result = $userService->register($data);
             echo json_encode($result);
         } 
         else if($endpoint == 'user' && isset($request[1]) && $request[1] == 'login') {
             $data = json_decode(file_get_contents("php://input"));
-            $result = $userService->login($data->email, $data->password);
+            $authService = new AuthService();
+            $result = $authService->authenticate($data->email, $data->password);
             echo json_encode($result);
         }
         else {

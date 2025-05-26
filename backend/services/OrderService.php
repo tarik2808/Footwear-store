@@ -14,118 +14,131 @@ class OrderService {
         $this->productDAO = new ProductDAO();
     }
 
-    public function createOrder($user_id) {
-        // Get cart items
-        $cartItems = $this->cartDAO->getCartItems($user_id);
-        if($cartItems->rowCount() == 0) {
-            return array("success" => false, "message" => "Cart is empty");
-        }
-
-        // Calculate total price
-        $total_price = 0;
-        $items = array();
-        
-        while($row = $cartItems->fetch(PDO::FETCH_ASSOC)) {
-            $total_price += $row['price'] * $row['quantity'];
-            
-            // Check stock
-            $product = $this->productDAO->readOne($row['product_id']);
-            $productData = $product->fetch(PDO::FETCH_ASSOC);
-            
-            if($productData['stock'] < $row['quantity']) {
-                return array(
-                    "success" => false, 
-                    "message" => "Not enough stock for product: " . $productData['name']
-                );
+    // Create a new order
+    public function createOrder($userId, $shippingAddress, $paymentMethod) {
+        try {
+            // Validate input
+            if (empty($shippingAddress) || empty($paymentMethod)) {
+                throw new Exception("Shipping address and payment method are required");
             }
-            
-            // Add to order items
-            $items[] = array(
-                "product_id" => $row['product_id'],
-                "quantity" => $row['quantity'],
-                "price" => $row['price']
-            );
-        }
 
-        // Create order object
-        $order = new stdClass();
-        $order->user_id = $user_id;
-        $order->total_price = $total_price;
-        $order->status = "pending";
-        $order->items = $items;
-
-        // Create order
-        $order_id = $this->orderDAO->create($order);
-        
-        if($order_id) {
-            // Update stock
-            foreach($items as $item) {
-                $this->productDAO->updateStock($item['product_id'], $item['quantity']);
+            // Get user's cart
+            $cart = $this->cartDAO->getCart($userId);
+            if (empty($cart)) {
+                throw new Exception("Cart is empty");
             }
-            
+
+            // Calculate total
+            $total = $this->cartDAO->getCartTotal($userId);
+
+            // Create order object
+            $order = new stdClass();
+            $order->user_id = $userId;
+            $order->shipping_address = $shippingAddress;
+            $order->payment_method = $paymentMethod;
+            $order->total_amount = $total;
+            $order->status = 'pending';
+
+            // Create order items
+            $orderItems = [];
+            foreach ($cart as $item) {
+                $orderItem = new stdClass();
+                $orderItem->product_id = $item['product_id'];
+                $orderItem->quantity = $item['quantity'];
+                $orderItem->price = $item['price'];
+                $orderItems[] = $orderItem;
+            }
+
+            // Create order
+            $orderId = $this->orderDAO->create($order, $orderItems);
+            if (!$orderId) {
+                throw new Exception("Failed to create order");
+            }
+
             // Clear cart
-            $this->cartDAO->clearCart($user_id);
-            
-            return array(
-                "success" => true, 
-                "message" => "Order created successfully",
-                "order_id" => $order_id
-            );
+            $this->cartDAO->clearCart($userId);
+
+            return $this->getOrder($orderId);
+        } catch (Exception $e) {
+            error_log("Error creating order: " . $e->getMessage());
+            throw $e;
         }
-        
-        return array("success" => false, "message" => "Failed to create order");
     }
 
-    public function getAllOrders() {
-        $result = $this->orderDAO->readAll();
-        $orders = array();
-        
-        while($row = $result->fetch(PDO::FETCH_ASSOC)) {
-            $orders[] = $row;
+    // Get order by ID
+    public function getOrder($orderId) {
+        try {
+            $order = $this->orderDAO->readOne($orderId);
+            if (!$order) {
+                throw new Exception("Order not found");
+            }
+
+            return $order;
+        } catch (Exception $e) {
+            error_log("Error getting order: " . $e->getMessage());
+            throw $e;
         }
-        
-        return array("success" => true, "orders" => $orders);
     }
 
-    public function getOrdersByUser($user_id) {
-        $result = $this->orderDAO->readByUser($user_id);
-        $orders = array();
-        
-        while($row = $result->fetch(PDO::FETCH_ASSOC)) {
-            $orders[] = $row;
+    // List orders with pagination and filters
+    public function listOrders($page = 1, $limit = 10, $filters = []) {
+        try {
+            $orders = $this->orderDAO->readAll($page, $limit, $filters);
+            $total = $this->orderDAO->getTotalCount($filters);
+
+            return [
+                'orders' => $orders,
+                'total' => $total,
+                'page' => $page,
+                'limit' => $limit
+            ];
+        } catch (Exception $e) {
+            error_log("Error listing orders: " . $e->getMessage());
+            throw $e;
         }
-        
-        return array("success" => true, "orders" => $orders);
     }
 
-    public function getOrderById($id) {
-        $order = $this->orderDAO->readOne($id);
-        
-        if($order) {
-            return array("success" => true, "order" => $order);
+    // Update order status
+    public function updateOrderStatus($orderId, $status, $userId, $userRole) {
+        try {
+            // Validate status
+            $validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+            if (!in_array($status, $validStatuses)) {
+                throw new Exception("Invalid status");
+            }
+
+            // Get order
+            $order = $this->orderDAO->readOne($orderId);
+            if (!$order) {
+                throw new Exception("Order not found");
+            }
+
+            // Check permissions
+            if ($userRole !== 'admin' && $order['user_id'] != $userId) {
+                throw new Exception("Unauthorized to update this order");
+            }
+
+            // Update status
+            if (!$this->orderDAO->updateStatus($orderId, $status)) {
+                throw new Exception("Failed to update order status");
+            }
+
+            return $this->getOrder($orderId);
+        } catch (Exception $e) {
+            error_log("Error updating order status: " . $e->getMessage());
+            throw $e;
         }
-        
-        return array("success" => false, "message" => "Order not found");
     }
 
-    public function updateOrderStatus($id, $status) {
-        // Validate status
-        $valid_statuses = array("pending", "processing", "shipped", "delivered", "cancelled");
-        if(!in_array($status, $valid_statuses)) {
-            return array("success" => false, "message" => "Invalid status");
+    // Get user's order history
+    public function getUserOrders($userId, $page = 1, $limit = 10) {
+        try {
+            $filters = ['user_id' => $userId];
+            return $this->listOrders($page, $limit, $filters);
+        } catch (Exception $e) {
+            error_log("Error getting user orders: " . $e->getMessage());
+            throw $e;
         }
-
-        if($this->orderDAO->updateStatus($id, $status)) {
-            return array("success" => true, "message" => "Order status updated successfully");
-        }
-        return array("success" => false, "message" => "Failed to update order status");
-    }
-
-    public function deleteOrder($id) {
-        if($this->orderDAO->delete($id)) {
-            return array("success" => true, "message" => "Order deleted successfully");
-        }
-        return array("success" => false, "message" => "Failed to delete order");
     }
 }
 ?> 

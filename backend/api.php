@@ -1,9 +1,18 @@
 <?php
+require_once __DIR__ . '/rest/vendor/autoload.php';
+require_once __DIR__ . '/controllers/AuthController.php';
+
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, GET, PUT, DELETE");
+header("Access-Control-Allow-Methods: POST, GET, PUT, DELETE, OPTIONS");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // Get the request path
 $request_uri = $_SERVER['REQUEST_URI'];
@@ -24,6 +33,31 @@ $resource = $segments[0] ?? '';
 // Debug information
 error_log("Segments: " . print_r($segments, true));
 error_log("Resource: " . $resource);
+
+// Initialize the AuthController
+$authController = new AuthController();
+
+// Handle login request
+if ($resource === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = json_decode(file_get_contents("php://input"), true);
+    
+    if (!isset($data['email']) || !isset($data['password'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Email and password are required']);
+        exit();
+    }
+    
+    $result = $authController->login($data['email'], $data['password']);
+    echo json_encode($result);
+    exit();
+}
+
+// Handle logout request
+if ($resource === 'logout' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $result = $authController->logout();
+    echo json_encode($result);
+    exit();
+}
 
 // Route the request to the appropriate handler
 switch($resource) {

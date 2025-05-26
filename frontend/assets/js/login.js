@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const loginForm = document.getElementById('login-form');
   
     if (loginForm) {
-        loginForm.addEventListener('submit', function (event) {
+        loginForm.addEventListener('submit', async function (event) {
             event.preventDefault();
   
             const email = document.getElementById('email').value.trim();
@@ -13,38 +13,46 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
   
-            // Get registered users from localStorage
-            const users = JSON.parse(localStorage.getItem('users')) || [];
+            try {
+                console.log('Attempting to login with:', { email });
+                
+                const response = await fetch('http://localhost:8080/FootwearStore%20Tarik%20Coralic/backend/api.php/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
   
-            // Check if admin is already defined, if not, add it
-            if (!users.some(user => user.email === "admin@example.com")) {
-                const adminUser = {
-                    username: "admin",
-                    email: "admin@example.com",
-                    password: "admin123",
-                    role: "admin"
-                };
-                users.push(adminUser);
-                localStorage.setItem("users", JSON.stringify(users));
-            }
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Response data:', data);
   
-            // Find the user in the stored data by email
-            const user = users.find(user => user.email === email && user.password === password);
+                if (data.success) {
+                    // Store minimal user info in sessionStorage (not localStorage for security)
+                    sessionStorage.setItem('user', JSON.stringify({
+                        id: data.user.id,
+                        email: data.user.email,
+                        name: data.user.name,
+                        role: data.user.role
+                    }));
   
-            if (user) {
-                // Store user session data
-                localStorage.setItem('loggedInUser', JSON.stringify({
-                    email: user.email,
-                    username: user.username,
-                    role: user.role
-                }));
-  
-                alert(`Welcome, ${user.username || user.email}! Redirecting...`);
-                window.location.href = user.role === 'admin' ? 'admin-dashboard.html' : '../index.html';
-            } else {
-                alert('Invalid email or password. Please try again.');
+                    alert(`Welcome, ${data.user.name}! Redirecting...`);
+                    window.location.href = data.user.role === 'admin' ? 'admin-dashboard.html' : '../index.html';
+                } else {
+                    alert(data.message || 'Invalid email or password. Please try again.');
+                }
+            } catch (error) {
+                console.error('Login error details:', {
+                    message: error.message,
+                    stack: error.stack
+                });
+                alert('An error occurred during login. Please check the console for details and try again.');
             }
         });
     }
-  });
+});
   

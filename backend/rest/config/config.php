@@ -1,19 +1,34 @@
 <?php
-// Database configuration
-define('DB_HOST', 'localhost');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'ecommerce');
+// Load environment variables from .env file if it exists
+if (file_exists(__DIR__ . '/../.env')) {
+    $envFile = file_get_contents(__DIR__ . '/../.env');
+    $lines = explode("\n", $envFile);
+    foreach ($lines as $line) {
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            if (!empty($key)) {
+                putenv("$key=$value");
+                $_ENV[$key] = $value;
+            }
+        }
+    }
+}
 
-// Upload configuration
-define('UPLOAD_DIR', __DIR__ . '/../uploads/');
-define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
-define('ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'gif']);
+// Default configuration values
+$config = [
+    'jwt_secret' => getenv('JWT_SECRET') ?: 'your-secret-key-change-this-in-production',
+    'jwt_expiry' => 3600, // 1 hour
+    'jwt_algorithm' => 'HS256',
+    'debug' => true
+];
 
-// API configuration
-define('API_VERSION', 'v1');
-define('CORS_ALLOWED_ORIGINS', ['http://localhost']);
+// Export configuration values
+foreach ($config as $key => $value) {
+    putenv("$key=$value");
+    $_ENV[$key] = $value;
+}
 
-// Error reporting
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+return $config;
+?>
