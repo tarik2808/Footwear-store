@@ -1,0 +1,371 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Footwear Store API",
+		"description": "API collection for the Footwear Store application",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test User\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/user/register",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "user", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/user/login",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "user", "login"]
+						}
+					}
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/user/users",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "user", "users"]
+						}
+					}
+				},
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/user/user/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "user", "user", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New Product\",\n    \"description\": \"Product description\",\n    \"price\": 99.99,\n    \"stock\": 10,\n    \"category_id\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/product/product",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "product", "product"]
+						}
+					}
+				},
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/product/products",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "product", "products"]
+						}
+					}
+				},
+				{
+					"name": "Get Product by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/product/product/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "product", "product", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Products by Category",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/product/products/category/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "product", "products", "category", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Cart",
+			"item": [
+				{
+					"name": "Add to Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 1,\n    \"product_id\": 1,\n    \"quantity\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/cart/cart/add",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "cart", "cart", "add"]
+						}
+					}
+				},
+				{
+					"name": "Get Cart Items",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/cart/cart/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "cart", "cart", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Cart Item",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantity\": 2\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/cart/cart/1/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "cart", "cart", "1", "1"]
+						}
+					}
+				},
+				{
+					"name": "Remove from Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/cart/cart/1/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "cart", "cart", "1", "1"]
+						}
+					}
+				},
+				{
+					"name": "Clear Cart",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/cart/cart/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "cart", "cart", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/order/order/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "order", "order", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get All Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/order/orders",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "order", "orders"]
+						}
+					}
+				},
+				{
+					"name": "Get Order by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/order/order/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "order", "order", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get User Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/order/orders/user/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "order", "orders", "user", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Order Status",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"shipped\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/order/order/1/status",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "order", "order", "1", "status"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Categories",
+			"item": [
+				{
+					"name": "Create Category",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New Category\",\n    \"description\": \"Category description\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/category/category",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "category", "category"]
+						}
+					}
+				},
+				{
+					"name": "Get All Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/category/categories",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "category", "categories"]
+						}
+					}
+				},
+				{
+					"name": "Get Category by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost/FootwearStore%20Tarik%20Coralic/backend/api.php/category/category/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"path": ["FootwearStore", "Tarik", "Coralic", "backend", "api.php", "category", "category", "1"]
+						}
+					}
+				}
+			]
+		}
+	]
+} 

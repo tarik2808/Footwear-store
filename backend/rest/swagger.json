@@ -1,0 +1,562 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Footwear Store API",
+    "version": "1.0.0",
+    "description": "API documentation for the Footwear Store application"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/FootwearStore%20Tarik%20Coralic/backend/rest",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/api/users/register": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "email": {"type": "string", "format": "email"},
+                  "password": {"type": "string", "minLength": 8},
+                  "role": {"type": "string", "enum": ["user", "admin"], "description": "User role (admin or user). Optional, defaults to user."}
+                },
+                "required": ["name", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User registered successfully"
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "List all users (admin only)",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "List of users"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/users/login": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Login user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {"type": "string", "format": "email"},
+                  "password": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "List all products",
+        "responses": {
+          "200": {
+            "description": "List of products"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Products"],
+        "summary": "Create a new product",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "description": {"type": "string"},
+                  "price": {"type": "number"},
+                  "stock": {"type": "integer"},
+                  "category_id": {"type": "integer"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product created successfully"
+          }
+        }
+      }
+    },
+    "/api/cart": {
+      "get": {
+        "tags": ["Cart"],
+        "summary": "Get user's cart",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Cart contents"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Cart"],
+        "summary": "Clear cart",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Cart cleared"
+          }
+        }
+      }
+    },
+    "/api/cart/items": {
+      "post": {
+        "tags": ["Cart"],
+        "summary": "Add item to cart",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "product_id": {"type": "integer"},
+                  "quantity": {"type": "integer", "minimum": 1}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Item added to cart"
+          }
+        }
+      }
+    },
+    "/api/cart/items/{id}": {
+      "put": {
+        "tags": ["Cart"],
+        "summary": "Update cart item quantity",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "quantity": {"type": "integer", "minimum": 1}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cart item updated"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Cart"],
+        "summary": "Remove cart item",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cart item removed"
+          }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete a user by ID (admin only)",
+        "description": "Deletes a user by their ID. Only admins can perform this action.",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"},
+            "description": "ID of the user to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"}
+                  }
+                },
+                "example": {"message": "User deleted successfully"}
+              }
+            }
+          },
+          "401": {"description": "Unauthorized"},
+          "403": {"description": "Forbidden"},
+          "404": {"description": "User not found"}
+        }
+      },
+      "put": {
+        "tags": ["Users"],
+        "summary": "Edit a user by ID (admin only)",
+        "description": "Edit user details. Only admins can perform this action.",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"},
+            "description": "ID of the user to edit"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "email": {"type": "string"},
+                  "role": {"type": "string", "enum": ["user", "admin"]},
+                  "status": {"type": "string", "enum": ["active", "inactive"]}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {"type": "integer"},
+                    "name": {"type": "string"},
+                    "email": {"type": "string"},
+                    "role": {"type": "string"},
+                    "status": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Unauthorized"},
+          "403": {"description": "Forbidden"},
+          "404": {"description": "User not found"}
+        }
+      }
+    },
+    "/api/users/{id}/password": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Change a user's password (admin only)",
+        "description": "Change the password for a user by their ID. Only admins can perform this action.",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"},
+            "description": "ID of the user whose password will be changed"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "description": "The new password for the user. Must meet password requirements."
+                  }
+                },
+                "required": ["password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or unauthorized"
+          }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "delete": {
+        "tags": ["Products"],
+        "summary": "Delete a product by ID (admin only)",
+        "description": "Deletes a product by its ID. Only admins can perform this action.",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"},
+            "description": "ID of the product to delete"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"}
+                  }
+                },
+                "example": {"message": "Product deleted successfully"}
+              }
+            }
+          },
+          "401": {"description": "Unauthorized"},
+          "403": {"description": "Forbidden"},
+          "404": {"description": "Product not found"}
+        }
+      },
+      "put": {
+        "tags": ["Products"],
+        "summary": "Update a product by ID (admin only)",
+        "description": "Updates a product's details. Only admins can perform this action.",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"},
+            "description": "ID of the product to update"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {"type": "string"},
+                  "description": {"type": "string"},
+                  "price": {"type": "number"},
+                  "category_id": {"type": "integer"},
+                  "stock": {"type": "integer"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string"}
+                  }
+                },
+                "example": {"message": "Product updated successfully"}
+              }
+            }
+          },
+          "401": {"description": "Unauthorized"},
+          "403": {"description": "Forbidden"},
+          "404": {"description": "Product not found"}
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "tags": ["Categories"],
+        "summary": "List all categories",
+        "responses": {"200": {"description": "List of categories"}}
+      },
+      "post": {
+        "tags": ["Categories"],
+        "summary": "Create a new category (admin only)",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "properties": {"name": {"type": "string"}, "description": {"type": "string"}}}}}},
+        "responses": {"200": {"description": "Category created successfully"}}
+      }
+    },
+    "/api/categories/{id}": {
+      "get": {
+        "tags": ["Categories"],
+        "summary": "Get category by ID",
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Category details"}, "404": {"description": "Category not found"}}
+      },
+      "put": {
+        "tags": ["Categories"],
+        "summary": "Update a category by ID (admin only)",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "properties": {"name": {"type": "string"}, "description": {"type": "string"}}}}}},
+        "responses": {"200": {"description": "Category updated successfully"}, "404": {"description": "Category not found"}}
+      },
+      "delete": {
+        "tags": ["Categories"],
+        "summary": "Delete a category by ID (admin only)",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Category deleted successfully"}, "404": {"description": "Category not found"}}
+      }
+    },
+    "/api/orders": {
+      "post": {
+        "tags": ["Orders"],
+        "summary": "Place an order",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "shipping_address": {"type": "string"},
+                  "payment_method": {"type": "string"},
+                  "cart_items": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "product_id": {"type": "integer"},
+                        "quantity": {"type": "integer"}
+                      },
+                      "required": ["product_id", "quantity"]
+                    }
+                  }
+                },
+                "required": ["shipping_address", "payment_method", "cart_items"]
+              }
+            }
+          }
+        },
+        "responses": {"200": {"description": "Order placed successfully"}}
+      },
+      "get": {
+        "tags": ["Orders"],
+        "summary": "List all orders (admin only)",
+        "security": [{"bearerAuth": []}],
+        "responses": {"200": {"description": "List of orders"}}
+      }
+    },
+    "/api/orders/user": {
+      "get": {
+        "tags": ["Orders"],
+        "summary": "Get current user's orders",
+        "security": [{"bearerAuth": []}],
+        "responses": {"200": {"description": "List of user's orders"}}
+      }
+    },
+    "/api/orders/{id}": {
+      "get": {
+        "tags": ["Orders"],
+        "summary": "Get order by ID",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "responses": {"200": {"description": "Order details"}, "404": {"description": "Order not found"}}
+      }
+    },
+    "/api/orders/{id}/status": {
+      "put": {
+        "tags": ["Orders"],
+        "summary": "Update order status (admin only)",
+        "security": [{"bearerAuth": []}],
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "properties": {"status": {"type": "string"}}}}}},
+        "responses": {"200": {"description": "Order status updated successfully"}, "404": {"description": "Order not found"}}
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+} 

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Footwear Store</title>
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head>
+<body>
+  <header id="navbar">
+    <button id="menu-toggle" class="hamburger">&#9776;</button>
+    <nav>
+      <a href="./index.html">Home</a>
+      <div class="dropdown">
+        <button class="dropbtn">Categories</button>
+        <div class="dropdown-content">
+          <a href="./pages/sneakers.html">Sneakers</a>
+          <a href="./pages/shoes.html">Shoes</a>
+          <a href="./pages/boots.html">Boots</a>
+          <a href="./pages/slippers.html">Slippers</a>
+          <a href="./pages/formal-shoes.html">Formal Shoes</a>
+        </div>
+      </div>
+      <a href="./pages/cart.html">Cart</a>
+      <a href="./pages/user-profile.html">Profile</a>
+      <a href="./pages/admin-dashboard.html" id="admin-dashboard-btn" style="display: none;">Admin Dashboard</a>
+      <div class="auth-links">
+        <a href="./pages/login.html" id="login-btn">Login</a>
+        <a href="./pages/register.html" id="register-btn">Register</a>
+        <a href="#" id="logout-btn" class="hidden">Logout</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Hero Image Section -->
+    <div class="hero-image">
+      <img src="./assets/images/storeimage.jpg" alt="Footwear Store Hero Image">
+    </div>
+
+    <section class="hero">
+      <div class="hero-content"> <!-- Wrap text content for better control -->
+        <h1>Step Into Style</h1>
+        <p>Find the perfect pair for every occasion.</p>
+        <a href="#featured-categories" class="btn">Shop Now</a>
+      </div>
+    </section>
+
+    <section id="featured-categories">
+      <h2>Explore Our Collection</h2>
+      <div class="featured-category-grid">
+        <div class="featured-category-item" onclick="window.location.href='./pages/sneakers.html'">
+          <img src="./assets/images/sneakers.webp" alt="Sneakers" class="featured-category-image">
+          <div class="category-overlay">
+            <h3>Sneakers</h3>
+          </div>
+        </div>
+        <div class="featured-category-item" onclick="window.location.href='./pages/shoes.html'">
+          <img src="./assets/images/shoes.jpg" alt="Shoes" class="featured-category-image">
+          <div class="category-overlay">
+            <h3>Shoes</h3>
+          </div>
+        </div>
+        <div class="featured-category-item" onclick="window.location.href='./pages/boots.html'">
+          <img src="./assets/images/boots.jpg" alt="Boots" class="featured-category-image">
+          <div class="category-overlay">
+            <h3>Boots</h3>
+          </div>
+        </div>
+        <div class="featured-category-item" onclick="window.location.href='./pages/slippers.html'">
+          <img src="./assets/images/slippers.jpg" alt="Slippers" class="featured-category-image">
+          <div class="category-overlay">
+            <h3>Slippers</h3>
+          </div>
+        </div>
+        <div class="featured-category-item" onclick="window.location.href='./pages/formal-shoes.html'">
+          <img src="./assets/images/formal.avif" alt="Formal Shoes" class="featured-category-image">
+          <div class="category-overlay">
+            <h3>Formal Shoes</h3>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 Footwear Store. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // GSAP Animation for Hero Content
+    gsap.from(".hero-content h1", {
+      duration: 1,
+      opacity: 0,
+      y: -50,
+      ease: "bounce",
+      onComplete: function() {
+        // Ensure the text remains visible after the animation
+        gsap.set(".hero-content h1", { opacity: 1, y: 0 });
+      }
+    });
+  
+    gsap.from(".hero-content p", {
+      duration: 1,
+      opacity: 0,
+      y: -30,
+      delay: 0.3,
+      onComplete: function() {
+        // Ensure the text remains visible after the animation
+        gsap.set(".hero-content p", { opacity: 1, y: 0 });
+      }
+    });
+  
+    gsap.from(".hero-content .btn", {
+      duration: 1,
+      opacity: 0,
+      scale: 0.5,
+      delay: 0.6,
+      onComplete: function() {
+        // Ensure the button remains visible after the animation
+        gsap.set(".hero-content .btn", { opacity: 1, scale: 1 });
+      }
+    });
+  </script>
+  <script src="./assets/js/navbar.js"></script>
+</body>
+</html>
