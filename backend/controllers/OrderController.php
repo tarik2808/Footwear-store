@@ -16,11 +16,20 @@ class OrderController extends BaseController {
             $userId = $user['id'];
             $data = Flight::request()->data;
             error_log('DEBUG: OrderController createOrder - data: ' . print_r($data, true));
-            $this->validateRequiredFields($data, ['shipping_address', 'payment_method', 'cart_items']);
+            $this->validateRequiredFields($data, ['shipping_name', 'shipping_address', 'shipping_phone', 'shipping_city', 'shipping_zip', 'payment_method', 'cart_items']);
             if (!isset($data->cart_items) || !is_array($data->cart_items) || count($data->cart_items) === 0) {
                 throw new Exception('cart_items must be a non-empty array');
             }
-            $order = $this->orderService->createOrder($userId, $data->shipping_address, $data->payment_method, $data->cart_items);
+            $order = $this->orderService->createOrder(
+                $userId,
+                $data->shipping_name,
+                $data->shipping_address,
+                $data->shipping_phone,
+                $data->shipping_city,
+                $data->shipping_zip,
+                $data->payment_method,
+                $data->cart_items
+            );
             $this->sendResponse($order, 201);
         } catch (Exception $e) {
             $this->sendError($e->getMessage(), 400, $e);

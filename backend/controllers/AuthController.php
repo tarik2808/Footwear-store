@@ -1,5 +1,6 @@
 <?php
-require_once __DIR__ . '/../config/Database.php';
+require_once dirname(__FILE__) . '/../config/Database.php';
+require_once dirname(__DIR__) . '/services/AuthService.php';
 
 class AuthController {
     private $conn;
@@ -32,6 +33,10 @@ class AuthController {
                     $_SESSION['name'] = $row['name'];
                     $_SESSION['role'] = $row['role'];
                     
+                    // Generate JWT token
+                    $authService = new AuthService();
+                    $token = $authService->generateToken($row['id'], $row['role']);
+                    
                     return [
                         'success' => true,
                         'message' => 'Login successful',
@@ -40,7 +45,8 @@ class AuthController {
                             'email' => $row['email'],
                             'name' => $row['name'],
                             'role' => $row['role']
-                        ]
+                        ],
+                        'token' => $token
                     ];
                 }
             }

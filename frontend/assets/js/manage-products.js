@@ -1,3 +1,5 @@
+import productService from '../../services/productService.js';
+
 document.addEventListener("DOMContentLoaded", function () {
   const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
 
@@ -57,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Handle form submission
-  addProductForm?.addEventListener("submit", (e) => {
+  addProductForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const productName = document.getElementById("product-name").value;
@@ -65,166 +67,143 @@ document.addEventListener("DOMContentLoaded", function () {
     const productPrice = document.getElementById("product-price").value;
     const productCategory = document.getElementById("product-category").value;
     const productImage = document.getElementById("product-image").files[0];
-    const productId = addProductForm.dataset.editId || Date.now().toString();
+    const productStock = document.getElementById("product-stock").value;
+    const productId = addProductForm.dataset.editId;
+    const currentImagePath = document.getElementById("current-image-path").value;
 
     if (!productCategory) {
       alert("Please select a category for the product");
       return;
     }
 
-    // If editing and no new image is selected, keep the existing image
-    if (!productImage && addProductForm.dataset.editId) {
-      const products = JSON.parse(localStorage.getItem("products")) || [];
-      const existingProduct = products.find(p => p.id === productId);
-      if (existingProduct) {
-        updateProduct(productId, {
-          name: productName,
-          description: productDescription,
-          price: parseFloat(productPrice),
-          category: productCategory,
-          image: existingProduct.image
-        });
-      }
-      return;
-    }
-
-    if (!productImage && !addProductForm.dataset.editId) {
+    if (!productImage && !productId && !currentImagePath) {
       alert("Please select an image for the product");
       return;
     }
 
-    console.log("Adding product with category:", productCategory);
+    // Prepare product data for backend
+    const productData = {
+      name: productName,
+      description: productDescription,
+      price: parseFloat(productPrice),
+      category_id: productCategory,
+      stock: parseInt(productStock, 10)
+    };
+    if (productImage) {
+      productData.image = productImage;
+    } else if (currentImagePath) {
+      productData.image = currentImagePath;
+    }
+    await submitProduct(productId, productData);
+  });
 
-    // Convert image to base64
-    const reader = new FileReader();
-    reader.onload = function(event) {
-      const imageData = event.target.result;
-      
-      // Create product object
-      const product = {
-        id: productId,
-        name: productName,
-        description: productDescription,
-        price: parseFloat(productPrice),
-        category: productCategory,
-        image: imageData
-      };
-
-      console.log("Created product object:", product);
-
-      // Get existing products or initialize empty array
-      let products = JSON.parse(localStorage.getItem("products")) || [];
-      
-      if (addProductForm.dataset.editId) {
-        // Update existing product
-        const index = products.findIndex(p => p.id === productId);
-        if (index !== -1) {
-          products[index] = product;
-        }
+  async function submitProduct(productId, productData) {
+    try {
+      if (productId) {
+        // Editing existing product
+        await productService.updateProduct(productId, productData);
+        alert('Product updated successfully!');
       } else {
-        // Add new product
-        products.push(product);
+        // Adding new product
+        await productService.createProduct(productData);
+        alert('Product added successfully!');
       }
-      
-      // Save to localStorage
-      localStorage.setItem("products", JSON.stringify(products));
-
-      // Reset form and close modal
       addProductForm.reset();
       delete addProductForm.dataset.editId;
       productModal.style.display = "none";
-
-      // Refresh products list
       displayProducts();
-    };
-
-    if (productImage) {
-      reader.readAsDataURL(productImage);
+    } catch (error) {
+      alert('Failed to save product: ' + error.message);
     }
-  });
+  }
 
   // Function to display products
-  function displayProducts() {
-    const products = JSON.parse(localStorage.getItem("products")) || [];
-    productsList.innerHTML = "";
+  async function displayProducts() {
+    try {
+      const result = await productService.getAllProducts();
+      const products = result.products || result;
+      productsList.innerHTML = "";
 
-    products.forEach(product => {
-      const productElement = document.createElement("div");
-      productElement.classList.add("product-item");
-      productElement.innerHTML = `
-        <img src="${product.image}" alt="${product.name}" class="product-image">
-        <h3>${product.name}</h3>
-        <p>${product.description}</p>
-        <p>Price: $${product.price}</p>
-        <p>Category: ${product.category}</p>
-        <div class="product-actions">
-          <button class="btn edit-btn" data-id="${product.id}">Edit</button>
-          <button class="btn delete-btn" data-id="${product.id}">Delete</button>
-        </div>
-      `;
-      productsList.appendChild(productElement);
-    });
-
-    // Add delete functionality
-    document.querySelectorAll(".delete-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        const productId = e.target.dataset.id;
-        console.log("Delete button clicked for product ID:", productId);
-        deleteProduct(productId);
+      products.forEach(product => {
+        const productElement = document.createElement("div");
+        productElement.classList.add("product-item");
+        productElement.innerHTML = `
+          <img src="${product.image ? `http://localhost:8080/FootwearStore Tarik Coralic/backend/${product.image}` : ''}" alt="${product.name}" class="product-image">
+          <h3>${product.name}</h3>
+          <p>${product.description}</p>
+          <p>Price: $${product.price}</p>
+          <p>Category: ${product.category_name || product.category_id}</p>
+          <p>Stock: ${product.stock}</p>
+          <div class="product-actions">
+            <button class="btn edit-btn" data-id="${product.id}">Edit</button>
+            <button class="btn delete-btn" data-id="${product.id}">Delete</button>
+          </div>
+        `;
+        productsList.appendChild(productElement);
       });
-    });
 
-    // Add edit functionality
-    document.querySelectorAll(".edit-btn").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        const productId = e.target.dataset.id;
-        editProduct(productId);
+      // Add delete functionality
+      document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const productId = e.target.dataset.id;
+          console.log("Delete button clicked for product ID:", productId);
+          deleteProduct(productId);
+        });
       });
-    });
+
+      // Add edit functionality
+      document.querySelectorAll(".edit-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const productId = e.target.dataset.id;
+          editProduct(productId);
+        });
+      });
+    } catch (error) {
+      productsList.innerHTML = '<p>Failed to load products from backend.</p>';
+    }
   }
 
   // Function to delete product
-  function deleteProduct(productId) {
+  async function deleteProduct(productId) {
     if (confirm("Are you sure you want to delete this product?")) {
-      let products = JSON.parse(localStorage.getItem("products")) || [];
-      console.log("Deleting product with ID:", productId);
-      console.log("Current products:", products);
-      
-      // Find the product to delete
-      const productToDelete = products.find(p => p.id === productId);
-      if (!productToDelete) {
-        console.error("Product not found:", productId);
-        return;
+      try {
+        await productService.deleteProduct(productId);
+        alert('Product deleted successfully!');
+        displayProducts();
+      } catch (error) {
+        alert('Failed to delete product: ' + error.message);
       }
-      
-      // Filter out the product to delete
-      products = products.filter(product => String(product.id) !== String(productId));
-      console.log("Products after deletion:", products);
-      
-      // Save to localStorage
-      localStorage.setItem("products", JSON.stringify(products));
-      
-      // Refresh the display
-      displayProducts();
     }
   }
 
   // Function to edit product
-  function editProduct(productId) {
-    const products = JSON.parse(localStorage.getItem("products")) || [];
-    const product = products.find(p => p.id === productId);
-
-    if (product) {
-      modalTitle.textContent = "Edit Product";
-      document.getElementById("product-name").value = product.name;
-      document.getElementById("product-description").value = product.description;
-      document.getElementById("product-price").value = product.price;
-      document.getElementById("product-category").value = product.category;
-      
-      // Store the product ID for the form submission
-      addProductForm.dataset.editId = productId;
-      
-      productModal.style.display = "block";
+  async function editProduct(productId) {
+    try {
+      const product = await productService.getProductById(productId);
+      if (product) {
+        modalTitle.textContent = "Edit Product";
+        document.getElementById("product-name").value = product.name;
+        document.getElementById("product-description").value = product.description;
+        document.getElementById("product-price").value = product.price;
+        document.getElementById("product-category").value = product.category_id;
+        document.getElementById("product-stock").value = product.stock;
+        addProductForm.dataset.editId = productId;
+        // Set current image preview and hidden input
+        const imagePreview = document.getElementById("current-product-image-preview");
+        const currentImagePathInput = document.getElementById("current-image-path");
+        if (product.image) {
+          imagePreview.src = `http://localhost:8080/FootwearStore Tarik Coralic/backend/${product.image}`;
+          imagePreview.style.display = "block";
+          currentImagePathInput.value = product.image;
+        } else {
+          imagePreview.src = "";
+          imagePreview.style.display = "none";
+          currentImagePathInput.value = "";
+        }
+        productModal.style.display = "block";
+      }
+    } catch (error) {
+      alert('Failed to fetch product: ' + error.message);
     }
   }
 
@@ -242,6 +221,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  // Initial display of products
+  // Initial load
   displayProducts();
 });

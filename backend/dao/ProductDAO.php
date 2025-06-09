@@ -34,18 +34,24 @@ class ProductDAO {
     public function create($product) {
         try {
             $this->validateProduct($product);
-            
             $query = "INSERT INTO " . $this->table_name . " 
-                     (name, description, price, stock, category_id) 
-                     VALUES (:name, :description, :price, :stock, :category_id)";
-            
+                     (name, description, price, stock, category_id";
+            $values = ") VALUES (:name, :description, :price, :stock, :category_id";
+            if (isset($product->image) && !empty($product->image)) {
+                $query .= ", image";
+                $values .= ", :image";
+            }
+            $query .= $values . ")";
+
             $stmt = $this->conn->prepare($query);
-            
             $stmt->bindParam(":name", $product->name);
             $stmt->bindParam(":description", $product->description);
             $stmt->bindParam(":price", $product->price);
             $stmt->bindParam(":stock", $product->stock);
             $stmt->bindParam(":category_id", $product->category_id);
+            if (isset($product->image) && !empty($product->image)) {
+                $stmt->bindParam(":image", $product->image);
+            }
 
             if($stmt->execute()) {
                 return $this->conn->lastInsertId();
@@ -93,12 +99,16 @@ class ProductDAO {
             
             // Add pagination
             $query .= " LIMIT :limit OFFSET :offset";
-            $params[':limit'] = $limit;
-            $params[':offset'] = $offset;
+            $params[':limit'] = (int)$limit;
+            $params[':offset'] = (int)$offset;
             
             $stmt = $this->conn->prepare($query);
             foreach($params as $key => $value) {
-                $stmt->bindValue($key, $value);
+                if ($key === ':limit' || $key === ':offset') {
+                    $stmt->bindValue($key, $value, PDO::PARAM_INT);
+                } else {
+                    $stmt->bindValue($key, $value);
+                }
             }
             $stmt->execute();
             
@@ -139,19 +149,24 @@ class ProductDAO {
                 throw new Exception("Product ID is required");
             }
             $this->validateProduct($product);
-            
+
             $query = "UPDATE " . $this->table_name . " 
                      SET name = :name, description = :description, 
-                         price = :price, stock = :stock, category_id = :category_id 
-                     WHERE id = :id";
-            
+                         price = :price, stock = :stock, category_id = :category_id";
+            if (isset($product->image) && !empty($product->image)) {
+                $query .= ", image = :image";
+            }
+            $query .= " WHERE id = :id";
+
             $stmt = $this->conn->prepare($query);
-            
             $stmt->bindParam(":name", $product->name);
             $stmt->bindParam(":description", $product->description);
             $stmt->bindParam(":price", $product->price);
             $stmt->bindParam(":stock", $product->stock);
             $stmt->bindParam(":category_id", $product->category_id);
+            if (isset($product->image) && !empty($product->image)) {
+                $stmt->bindParam(":image", $product->image);
+            }
             $stmt->bindParam(":id", $product->id);
 
             if($stmt->execute()) {

@@ -12,7 +12,7 @@ class UserDAO {
 
     // Create new user
     public function create($user) {
-        $query = "INSERT INTO " . $this->table_name . " (name, email, password, role) VALUES (:name, :email, :password, :role)";
+        $query = "INSERT INTO " . $this->table_name . " (name, email, password, role, status) VALUES (:name, :email, :password, :role, :status)";
         $stmt = $this->conn->prepare($query);
 
         // Sanitize and bind
@@ -20,6 +20,7 @@ class UserDAO {
         $stmt->bindParam(":email", $user->email);
         $stmt->bindParam(":password", $user->password);
         $stmt->bindParam(":role", $user->role);
+        $stmt->bindParam(":status", $user->status);
 
         if($stmt->execute()) {
             // Fetch the newly created user
@@ -73,7 +74,7 @@ class UserDAO {
     // Update user
     public function update($user) {
         $query = "UPDATE " . $this->table_name . " 
-                 SET name = :name, email = :email, password = :password, role = :role 
+                 SET name = :name, email = :email, password = :password, role = :role, status = :status 
                  WHERE id = :id";
         
         $stmt = $this->conn->prepare($query);
@@ -83,6 +84,7 @@ class UserDAO {
         $stmt->bindParam(":email", $user->email);
         $stmt->bindParam(":password", $user->password);
         $stmt->bindParam(":role", $user->role);
+        $stmt->bindParam(":status", $user->status);
         $stmt->bindParam(":id", $user->id);
 
         if($stmt->execute()) {

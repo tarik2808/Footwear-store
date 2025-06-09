@@ -2,6 +2,7 @@
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/UserService.php';
 
 class AuthService {
     private $secretKey;

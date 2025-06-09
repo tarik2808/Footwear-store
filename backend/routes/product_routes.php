@@ -21,9 +21,45 @@ error_log("Full PATH_INFO: " . ($_SERVER['PATH_INFO'] ?? 'none'));
 switch($method) {
     case 'POST':
         if($endpoint == 'product') {
-            $data = json_decode(file_get_contents("php://input"));
-            $result = $productService->createProduct($data);
-            echo json_encode($result);
+            // Check if the request is multipart/form-data (file upload)
+            if (isset($_FILES['image'])) {
+                $name = $_POST['name'] ?? '';
+                $description = $_POST['description'] ?? '';
+                $price = $_POST['price'] ?? '';
+                $category_id = $_POST['category_id'] ?? '';
+                $stock = $_POST['stock'] ?? 0;
+
+                // Handle file upload
+                $imagePath = null;
+                if ($_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                    $uploadDir = __DIR__ . '/../uploads/products/';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+                    $fileName = uniqid() . '_' . basename($_FILES['image']['name']);
+                    $targetFile = $uploadDir . $fileName;
+                    if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
+                        $imagePath = 'uploads/products/' . $fileName; // Save this in DB
+                    }
+                }
+
+                // Build data object for ProductService
+                $data = new stdClass();
+                $data->name = $name;
+                $data->description = $description;
+                $data->price = $price;
+                $data->category_id = $category_id;
+                $data->stock = $stock;
+                $data->image = $imagePath;
+
+                $result = $productService->createProduct($data);
+                echo json_encode($result);
+            } else {
+                // Fallback: JSON body (no file upload)
+                $data = json_decode(file_get_contents("php://input"));
+                $result = $productService->createProduct($data);
+                echo json_encode($result);
+            }
         }
         else if($endpoint == 'products' && isset($request[1]) && $request[1] == 'bulk') {
             $data = json_decode(file_get_contents("php://input"));
@@ -76,8 +112,40 @@ switch($method) {
 
     case 'PUT':
         if($endpoint == 'product' && isset($request[1]) && is_numeric($request[1])) {
-            $data = json_decode(file_get_contents("php://input"));
-            $data->id = $request[1];
+            // Support file upload for product update
+            $name = $_POST['name'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $price = $_POST['price'] ?? '';
+            $category_id = $_POST['category_id'] ?? '';
+            $stock = $_POST['stock'] ?? 0;
+            $id = $request[1];
+
+            // Handle file upload
+            $imagePath = null;
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = __DIR__ . '/../uploads/products/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $fileName = uniqid() . '_' . basename($_FILES['image']['name']);
+                $targetFile = $uploadDir . $fileName;
+                if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
+                    $imagePath = 'uploads/products/' . $fileName;
+                }
+            }
+
+            // Build data object for ProductService
+            $data = new stdClass();
+            $data->id = $id;
+            $data->name = $name;
+            $data->description = $description;
+            $data->price = $price;
+            $data->category_id = $category_id;
+            $data->stock = $stock;
+            if ($imagePath) {
+                $data->image = $imagePath;
+            }
+
             $result = $productService->updateProduct($data);
             echo json_encode($result);
         }

@@ -46,7 +46,7 @@ class BaseController {
         if (empty($token)) {
             throw new Exception("No authorization token provided");
         }
-        $validation = $this->authService->validateToken($token);
+        $validation = $this->authService->verifyToken($token);
         if (!$validation['valid']) {
             throw new Exception("Invalid token: " . $validation['error']);
         }
@@ -83,7 +83,7 @@ class BaseController {
             throw new Exception("No authorization token provided");
         }
         
-        $validation = $this->authService->validateToken($token);
+        $validation = $this->authService->verifyToken($token);
         if (!$validation['valid']) {
             error_log('Token validation failed: ' . $validation['error']);
             throw new Exception("Invalid token: " . $validation['error']);

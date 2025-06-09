@@ -70,12 +70,17 @@ class OrderDAO {
             
             // Create order
             $query = "INSERT INTO " . $this->table_name . " 
-                     (user_id, total_price, status) 
-                     VALUES (:user_id, :total_price, 'pending')";
+                     (user_id, total_price, status, shipping_name, shipping_address, shipping_phone, shipping_city, shipping_zip) 
+                     VALUES (:user_id, :total_price, 'pending', :shipping_name, :shipping_address, :shipping_phone, :shipping_city, :shipping_zip)";
             
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(":user_id", $order->user_id);
             $stmt->bindParam(":total_price", $total_price);
+            $stmt->bindParam(":shipping_name", $order->shipping_name);
+            $stmt->bindParam(":shipping_address", $order->shipping_address);
+            $stmt->bindParam(":shipping_phone", $order->shipping_phone);
+            $stmt->bindParam(":shipping_city", $order->shipping_city);
+            $stmt->bindParam(":shipping_zip", $order->shipping_zip);
             
             if (!$stmt->execute()) {
                 throw new Exception("Failed to create order");
@@ -149,7 +154,11 @@ class OrderDAO {
             
             $stmt = $this->conn->prepare($query);
             foreach($params as $key => $value) {
-                $stmt->bindValue($key, $value);
+                if ($key === ':limit' || $key === ':offset') {
+                    $stmt->bindValue($key, (int)$value, PDO::PARAM_INT);
+                } else {
+                    $stmt->bindValue($key, $value);
+                }
             }
             $stmt->execute();
             
@@ -272,7 +281,11 @@ class OrderDAO {
             
             $stmt = $this->conn->prepare($query);
             foreach($params as $key => $value) {
-                $stmt->bindValue($key, $value);
+                if ($key === ':limit' || $key === ':offset') {
+                    $stmt->bindValue($key, (int)$value, PDO::PARAM_INT);
+                } else {
+                    $stmt->bindValue($key, $value);
+                }
             }
             $stmt->execute();
             

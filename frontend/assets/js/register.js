@@ -1,8 +1,8 @@
-document.getElementById("registerForm").addEventListener("submit", function(event) {
+document.getElementById("registerForm").addEventListener("submit", async function(event) {
     event.preventDefault(); // Prevent form submission
 
     // Get input values
-    let username = document.getElementById("username").value;
+    let fullname = document.getElementById("fullname").value;
     let email = document.getElementById("email").value;
     let password = document.getElementById("password").value;
     let confirmPassword = document.getElementById("confirmPassword").value;
@@ -24,36 +24,17 @@ document.getElementById("registerForm").addEventListener("submit", function(even
         passwordError.textContent = "";
     }
 
-    // Get existing users from localStorage or initialize an empty array
-    let users = JSON.parse(localStorage.getItem("users")) || [];
-
-    // Check if username or email already exists
-    let userExists = users.some(user => user.username === username || user.email === email);
-    if (userExists) {
-        alert("Username or Email already exists. Please use a different one.");
-        return;
+    try {
+        // Register the user using authService
+        const result = await authService.register(fullname, email, password);
+        
+        // Show success message
+        alert("Registration successful! You are now logged in.");
+        
+        // Redirect to the appropriate page based on user role
+        const user = result.user;
+        window.location.href = user.role === "admin" ? "../admin-dashboard.html" : "../index.html";
+    } catch (error) {
+        alert(error.message || "Registration failed. Please try again.");
     }
-
-    // Assign "admin" role if the username or email matches predefined criteria
-    let role = (username === "admin" || email === "admin@example.com") ? "admin" : "user";
-
-    // Create new user object
-    let newUser = {
-        username: username,
-        email: email,
-        password: password,
-        role: role
-    };
-
-    // Store user in localStorage
-    users.push(newUser);
-    localStorage.setItem("users", JSON.stringify(users));
-
-    // Automatically log in the user
-    localStorage.setItem("loggedInUser", JSON.stringify(newUser));
-
-    alert(`Registration successful! You are now logged in as ${role}.`);
-
-    // Redirect to the appropriate page
-    window.location.href = role === "admin" ? "../admin-dashboard.html" : "../index.html";
 });

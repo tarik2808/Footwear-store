@@ -1,19 +1,19 @@
-// Helper function to get logged-in user's username
+// Helper function to get logged-in user's email
 function getLoggedInUser() {
-    const storedUser = localStorage.getItem("loggedInUser");
-    return storedUser ? JSON.parse(storedUser).username : null;
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser).email : null;
 }
 
 // Global addToCart function to be used across all product pages
 function addToCart(productId, productName, productSize, productPrice, productImage) {
-    const username = getLoggedInUser();
-    if (!username) {
+    const email = getLoggedInUser();
+    if (!email) {
         alert("You must be logged in to add items to the cart.");
         window.location.href = "login.html"; 
         return;
     }
 
-    let cart = getUserCart(username);
+    let cart = getUserCart(email);
     const existingItemIndex = cart.findIndex(item => item.id === productId && item.size === productSize);
 
     if (existingItemIndex !== -1) {
@@ -22,6 +22,10 @@ function addToCart(productId, productName, productSize, productPrice, productIma
         if (!productImage) {
             console.warn("Missing image for product:", productName);
             productImage = "../assets/images/placeholder.png"; // Use a default image
+        }
+        // Ensure productImage is a full URL
+        if (productImage && !productImage.startsWith('http')) {
+            productImage = 'http://localhost:8080/FootwearStore Tarik Coralic/backend/' + productImage.replace(/^\/+/, '');
         }
         cart.push({ 
             id: productId, 
@@ -33,8 +37,8 @@ function addToCart(productId, productName, productSize, productPrice, productIma
         });
     }
 
-    saveUserCart(username, cart);
-    saveCartObject(username);
+    saveUserCart(email, cart);
+    saveCartObject(email);
     
     // Create and show success message
     showSuccessMessage(`${productName} has been added to your cart!`);
@@ -90,23 +94,23 @@ function showSuccessMessage(message) {
 }
 
 // Helper functions for cart operations
-function getUserCart(username) {
-    return JSON.parse(localStorage.getItem(`cart_${username}`)) || [];
+function getUserCart(email) {
+    return JSON.parse(localStorage.getItem(`cart_${email}`)) || [];
 }
 
-function saveUserCart(username, cart) {
-    localStorage.setItem(`cart_${username}`, JSON.stringify(cart));
+function saveUserCart(email, cart) {
+    localStorage.setItem(`cart_${email}`, JSON.stringify(cart));
 }
 
-function saveCartObject(username) {
-    const cart = getUserCart(username);
+function saveCartObject(email) {
+    const cart = getUserCart(email);
     const cartObject = {
         id: Date.now(),
-        user: username,
+        user: email,
         items: cart,
         totalAmount: calculateTotal(cart)
     };
-    localStorage.setItem(`cartObject_${username}`, JSON.stringify(cartObject));
+    localStorage.setItem(`cartObject_${email}`, JSON.stringify(cartObject));
 }
 
 function calculateTotal(cart) {

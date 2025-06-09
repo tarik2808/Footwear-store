@@ -15,48 +15,32 @@ class OrderService {
     }
 
     // Create a new order
-    public function createOrder($userId, $shippingAddress, $paymentMethod) {
+    public function createOrder($userId, $shippingName, $shippingAddress, $shippingPhone, $shippingCity, $shippingZip, $paymentMethod, $cartItems) {
         try {
             // Validate input
-            if (empty($shippingAddress) || empty($paymentMethod)) {
-                throw new Exception("Shipping address and payment method are required");
+            if (empty($shippingName) || empty($shippingAddress) || empty($shippingPhone) || empty($shippingCity) || empty($shippingZip) || empty($paymentMethod)) {
+                throw new Exception("All shipping fields and payment method are required");
             }
-
-            // Get user's cart
-            $cart = $this->cartDAO->getCart($userId);
-            if (empty($cart)) {
-                throw new Exception("Cart is empty");
+            if (empty($cartItems) || !is_array($cartItems)) {
+                throw new Exception("Cart items are required");
             }
-
-            // Calculate total
-            $total = $this->cartDAO->getCartTotal($userId);
 
             // Create order object
             $order = new stdClass();
             $order->user_id = $userId;
+            $order->shipping_name = $shippingName;
             $order->shipping_address = $shippingAddress;
+            $order->shipping_phone = $shippingPhone;
+            $order->shipping_city = $shippingCity;
+            $order->shipping_zip = $shippingZip;
             $order->payment_method = $paymentMethod;
-            $order->total_amount = $total;
-            $order->status = 'pending';
-
-            // Create order items
-            $orderItems = [];
-            foreach ($cart as $item) {
-                $orderItem = new stdClass();
-                $orderItem->product_id = $item['product_id'];
-                $orderItem->quantity = $item['quantity'];
-                $orderItem->price = $item['price'];
-                $orderItems[] = $orderItem;
-            }
+            $order->items = $cartItems;
 
             // Create order
-            $orderId = $this->orderDAO->create($order, $orderItems);
+            $orderId = $this->orderDAO->create($order);
             if (!$orderId) {
                 throw new Exception("Failed to create order");
             }
-
-            // Clear cart
-            $this->cartDAO->clearCart($userId);
 
             return $this->getOrder($orderId);
         } catch (Exception $e) {
@@ -119,8 +103,24 @@ class OrderService {
             }
 
             // Update status
-            if (!$this->orderDAO->updateStatus($orderId, $status)) {
+            if (!$this->orderDAO->updateStatus($orderId, $status, $userId)) {
                 throw new Exception("Failed to update order status");
+            }
+
+            // Decrement product stock if status is shipped
+            if (strtolower($status) === 'shipped') {
+                error_log('DEBUG: OrderService updateOrderStatus - full order: ' . print_r($order, true));
+                $orderItems = $order['items'] ?? [];
+                error_log('DEBUG: OrderService updateOrderStatus - order[items]: ' . print_r($orderItems, true));
+                foreach ($orderItems as $item) {
+                    $productId = $item['product_id'] ?? null;
+                    $quantity = $item['quantity'] ?? 1;
+                    error_log("DEBUG: OrderService updateOrderStatus - Updating stock for productId=$productId, quantity=$quantity");
+                    if ($productId && $quantity) {
+                        $result = $this->productDAO->updateStock($productId, $quantity);
+                        error_log("DEBUG: updateStock result for productId=$productId: " . var_export($result, true));
+                    }
+                }
             }
 
             return $this->getOrder($orderId);

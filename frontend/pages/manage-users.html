@@ -68,10 +68,13 @@
                 <h2>Edit User</h2>
                 <form id="editUserForm">
                     <label for="editUsername">Username</label>
-                    <input type="text" id="editUsername" disabled>
+                    <input type="text" id="editUsername">
 
                     <label for="editEmail">Email</label>
                     <input type="email" id="editEmail">
+
+                    <label for="editPassword">Password</label>
+                    <input type="password" id="editPassword" placeholder="Leave blank to keep unchanged">
 
                     <label for="editRole">Role</label>
                     <select id="editRole">
@@ -97,7 +100,7 @@
   </footer>
 
     <!-- JavaScript files -->
-    <script src="../assets/js/manage-users.js"></script>
+    <script type="module" src="../assets/js/manage-users.js"></script>
     <script src="../assets/js/navbar.js"></script>
 </body>
 </html>

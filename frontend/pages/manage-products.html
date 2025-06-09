@@ -61,16 +61,22 @@
           <label for="product-category">Category</label>
           <select id="product-category" required>
             <option value="">Select a category</option>
-            <option value="sneakers">Sneakers</option>
-            <option value="shoes">Shoes</option>
-            <option value="boots">Boots</option>
-            <option value="slippers">Slippers</option>
-            <option value="formal-shoes">Formal Shoes</option>
+            <option value="1">Sneakers</option>
+            <option value="2">Boots</option>
+            <option value="3">Sandals</option>
+            <option value="4">Formal Shoes</option>
+            <option value="5">Shoes</option>
           </select>
         </div>
         <div class="form-group">
           <label for="product-image">Product Image</label>
-          <input type="file" id="product-image" accept="image/*" required>
+          <img id="current-product-image-preview" src="" alt="Current Product Image" style="display:none; max-width:100px; margin-bottom:8px;" />
+          <input type="hidden" id="current-image-path" name="current-image-path" />
+          <input type="file" id="product-image" accept="image/*">
+        </div>
+        <div class="form-group">
+          <label for="product-stock">Stock</label>
+          <input type="number" id="product-stock" min="0" required>
         </div>
         <div class="form-buttons">
           <button type="submit" class="btn">Save Product</button>
@@ -85,6 +91,6 @@
   </footer>
 
   <script src="../assets/js/navbar.js"></script>
-  <script src="../assets/js/manage-products.js"></script>
+  <script type="module" src="../assets/js/manage-products.js"></script>
 </body>
 </html>
