@@ -43,6 +43,9 @@ class ProductService {
             $product->price = $productData['price'];
             $product->stock = $productData['stock'] ?? 0;
             $product->category_id = $productData['category_id'];
+            if (isset($productData['image']) && !empty($productData['image'])) {
+                $product->image = $productData['image'];
+            }
 
             // Create product in database
             $productId = $this->productDAO->create($product);
@@ -124,6 +127,9 @@ class ProductService {
             $product->price = $productData['price'] ?? null;
             $product->stock = $productData['stock'] ?? null;
             $product->category_id = $productData['category_id'] ?? null;
+            if (isset($productData['image']) && !empty($productData['image'])) {
+                $product->image = $productData['image'];
+            }
 
             if (!$this->productDAO->update($product)) {
                 throw new Exception("Failed to update product");

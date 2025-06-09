@@ -34,15 +34,14 @@
       </div>
     </nav>
   </header>
-  <script src="../assets/js/navbar.js"></script>
 
   <main class="register-container">
     <div class="register-box">
       <h2>Create an Account</h2>
       <form id="registerForm">
         <div class="input-group">
-          <label for="username">Username</label>
-          <input type="text" id="username" name="username" required>
+          <label for="fullname">Full Name</label>
+          <input type="text" id="fullname" name="fullname" required pattern="[A-Za-z\s]+" title="Only letters and spaces allowed">
         </div>
 
         <div class="input-group">
@@ -70,28 +69,11 @@
 
   <footer>
     <p>© 2025 Footwear Store. All rights reserved.</p>
-</footer>
+  </footer>
 
+  <!-- Load scripts in correct order -->
   <script src="../assets/js/auth.js"></script>
-  <script>
-    // Password confirmation validation
-    document.getElementById("registerForm").addEventListener("submit", function(event) {
-      let password = document.getElementById("password").value;
-      let confirmPassword = document.getElementById("confirmPassword").value;
-      let passwordError = document.getElementById("passwordError");
-
-      if (password !== confirmPassword) {
-        event.preventDefault();
-        passwordError.textContent = "Passwords do not match!";
-        passwordError.style.color = "red";
-      } else {
-        passwordError.textContent = "";
-      }
-    });
-  </script>
-
-<script src="../assets/js/register.js"></script>
-<script src="../assets/js/navbar.js"></script> 
-
+  <script src="../assets/js/navbar.js"></script>
+  <script src="../assets/js/register.js"></script>
 </body>
 </html>

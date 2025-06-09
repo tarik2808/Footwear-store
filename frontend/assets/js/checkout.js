@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Function to check if the user is logged in
 function isUserLoggedIn() {
-    return localStorage.getItem('loggedInUser') !== null;  // Check if user is logged in
+    return localStorage.getItem('user') !== null;  // Check if user is logged in
 }
 
 // Function to handle the form submission and validate the form data
@@ -37,107 +37,91 @@ function handleCheckoutForm(event) {
     const city = document.getElementById("city").value;
     const zipCode = document.getElementById("zip-code").value;
 
-    if (!fullName || !address || !phoneNumber || !city || !zipCode) {
-        alert("Please fill out all required fields.");
+    // Extra validation and logging
+    const missingFields = [];
+    if (!fullName) missingFields.push('Full Name');
+    if (!address) missingFields.push('Address');
+    if (!phoneNumber) missingFields.push('Phone Number');
+    if (!city) missingFields.push('City');
+    if (!zipCode) missingFields.push('Zip Code');
+    if (missingFields.length > 0) {
+        alert('Please fill out the following fields: ' + missingFields.join(', '));
         return;
     }
 
     // Get the logged-in user
-    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
-    const username = loggedInUser ? loggedInUser.username : 'Guest';
+    const loggedInUser = JSON.parse(localStorage.getItem('user'));
+    const email = loggedInUser ? loggedInUser.email : 'Guest';
 
     // Retrieve cart items for the user
-    const cart = JSON.parse(localStorage.getItem(`cart_${username}`)) || [];
+    const cart = JSON.parse(localStorage.getItem(`cart_${email}`)) || [];
 
     if (cart.length === 0) {
         alert("Your cart is empty. Add items before proceeding to checkout.");
         return;
     }
 
-    // Order object to be stored in localStorage
+    // Map cart items to use product_id instead of id
+    const cartItems = cart.map(item => ({
+        product_id: item.id,
+        quantity: item.quantity,
+        price: item.price
+    }));
+
+    // Order object to be sent to backend
     const order = {
-        id: Date.now(),  // Unique order ID
-        user: username,
-        shippingInfo: {
-            fullName: fullName,
-            address: address,
-            phoneNumber: phoneNumber,
-            city: city,
-            zipCode: zipCode
-        },
-        cartItems: cart, // Store the entire cart in the order
-        status: "pending",  // Order status
-        totalAmount: getCartTotal()  // Get the total from the cart
+        shipping_name: fullName,
+        shipping_address: address,
+        shipping_phone: phoneNumber,
+        shipping_city: city,
+        shipping_zip: zipCode,
+        payment_method: 'cash', // or get from form if you have payment method selection
+        cart_items: cartItems
     };
 
-    // Retrieve existing orders from localStorage and add the new order
-    const existingOrders = JSON.parse(localStorage.getItem('orders')) || [];
-    existingOrders.push(order);
+    // Log the order payload for debugging
+    console.log('Order payload:', order);
 
-    // Save the updated orders back to localStorage
-    localStorage.setItem('orders', JSON.stringify(existingOrders));
-
-    // Clear the user's cart after checkout
-    localStorage.removeItem(`cart_${username}`);
-    localStorage.removeItem(`cartTotal_${username}`);
-
-    // Show success message
-    const successMessage = document.createElement('div');
-    successMessage.className = 'success-message';
-    successMessage.textContent = "Order placed successfully! Thank you for your purchase.";
-    successMessage.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background-color: #4CAF50;
-        color: white;
-        padding: 15px;
-        border-radius: 5px;
-        z-index: 1000;
-        animation: fadeInOut 3s forwards;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    `;
-    document.body.appendChild(successMessage);
-
-    // Add CSS for the animation if it doesn't exist yet
-    if (!document.getElementById('checkout-animation-style')) {
-        const style = document.createElement('style');
-        style.id = 'checkout-animation-style';
-        style.textContent = `
-            @keyframes fadeInOut {
-                0% { opacity: 0; transform: translateY(-20px); }
-                10% { opacity: 1; transform: translateY(0); }
-                90% { opacity: 1; transform: translateY(0); }
-                100% { opacity: 0; transform: translateY(-20px); }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // Redirect to home page after a short delay
-    setTimeout(() => {
-        window.location.href = "../index.html";
-    }, 2000);
+    // Send order to backend (replace with your API call)
+    fetch('http://localhost:8080/FootwearStore Tarik Coralic/backend/rest/api/orders', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(order)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Handle success (clear cart, show message, redirect, etc.)
+        localStorage.removeItem(`cart_${email}`);
+        localStorage.removeItem(`cartTotal_${email}`);
+        alert('Order placed successfully!');
+        window.location.href = '../index.html';
+    })
+    .catch(error => {
+        alert('Failed to place order. Please try again.');
+        console.error(error);
+    });
 }
-
 
 // Function to get the cart total for the logged-in user
 function getCartTotal() {
-    const storedUser = localStorage.getItem("loggedInUser");
+    const storedUser = localStorage.getItem("user");
     if (!storedUser) return 0;
 
-    const username = JSON.parse(storedUser).username;
-    const total = localStorage.getItem(`cartTotal_${username}`) || "0.00"; // Get total from localStorage
+    const email = JSON.parse(storedUser).email;
+    const total = localStorage.getItem(`cartTotal_${email}`) || "0.00"; // Get total from localStorage
     return parseFloat(total);
 }
 
 // Function to display the cart total on checkout page
 function displayCheckoutTotal() {
-    const storedUser = localStorage.getItem("loggedInUser");
+    const storedUser = localStorage.getItem("user");
     if (!storedUser) return; // If no user is logged in, exit
 
-    const username = JSON.parse(storedUser).username;
-    const total = localStorage.getItem(`cartTotal_${username}`); // Use the correct key with the username
+    const email = JSON.parse(storedUser).email;
+    const total = localStorage.getItem(`cartTotal_${email}`); // Use the correct key with the email
 
     if (total) {
         // Display the total in the checkout summary

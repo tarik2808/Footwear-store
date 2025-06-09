@@ -77,6 +77,9 @@ class UserService {
 
             $data->password = password_hash($data->password, PASSWORD_DEFAULT);
             $data->role = 'user'; // Default role
+            if (!isset($data->status) || empty($data->status)) {
+                $data->status = 'active';
+            }
 
             return $this->userDAO->create($data);
         } catch (Exception $e) {
@@ -132,6 +135,9 @@ class UserService {
             }
 
             $data->id = $userId;
+            if (!isset($data->status) || empty($data->status)) {
+                $data->status = 'active';
+            }
             $user = $this->userDAO->update($data);
             if (!$user) {
                 throw new Exception("Failed to update profile");

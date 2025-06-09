@@ -32,14 +32,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.log('Response data:', data);
   
                 if (data.success) {
-                    // Store minimal user info in sessionStorage (not localStorage for security)
-                    sessionStorage.setItem('user', JSON.stringify({
+                    // Store minimal user info in localStorage for admin checks
+                    const userObj = {
                         id: data.user.id,
                         email: data.user.email,
                         name: data.user.name,
                         role: data.user.role
-                    }));
-  
+                    };
+                    localStorage.setItem('loggedInUser', JSON.stringify(userObj));
+                    localStorage.setItem('user', JSON.stringify(userObj)); // For cart and other logic
+                    // Store JWT token for API authentication if present
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                    }
                     alert(`Welcome, ${data.user.name}! Redirecting...`);
                     window.location.href = data.user.role === 'admin' ? 'admin-dashboard.html' : '../index.html';
                 } else {

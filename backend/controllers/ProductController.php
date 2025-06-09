@@ -17,6 +17,18 @@ class ProductController extends BaseController {
                 throw new Exception("Unauthorized");
             }
             $data = Flight::request()->data;
+            // Handle file upload
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = dirname(__DIR__) . '/uploads/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $filename = uniqid() . '_' . basename($_FILES['image']['name']);
+                $targetFile = $uploadDir . $filename;
+                if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
+                    $data['image'] = 'uploads/' . $filename;
+                }
+            }
             $this->validateRequiredFields($data, ['name', 'description', 'price', 'category_id']);
             
             $product = $this->productService->createProduct($data);
@@ -55,6 +67,18 @@ class ProductController extends BaseController {
                 throw new Exception("Unauthorized");
             }
             $data = Flight::request()->data;
+            // Handle file upload
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = dirname(__DIR__) . '/uploads/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+                $filename = uniqid() . '_' . basename($_FILES['image']['name']);
+                $targetFile = $uploadDir . $filename;
+                if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
+                    $data['image'] = 'uploads/' . $filename;
+                }
+            }
             $product = $this->productService->updateProduct($id, $data);
             $this->sendResponse($product);
         } catch (Exception $e) {

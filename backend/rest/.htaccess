@@ -2,7 +2,7 @@ RewriteEngine On
 
 # Handle Authorization header
 RewriteCond %{HTTP:Authorization} ^(.*)
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
 
 # Handle Authorization header (alternative method)
 SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1

@@ -1,6 +1,13 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 require 'vendor/autoload.php';
-require 'config/database.php';
+require_once dirname(__DIR__) . '/config/Database.php';
 require_once dirname(__DIR__) . '/controllers/UserController.php';
 require_once dirname(__DIR__) . '/controllers/ProductController.php';
 require_once dirname(__DIR__) . '/controllers/CategoryController.php';
@@ -53,6 +60,11 @@ Flight::route('GET /api/products', [$productController, 'listProducts']);
 Flight::route('POST /api/products', function() use ($productController, $authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
         $productController->createProduct();
+    }
+});
+Flight::route('POST /api/products/@id', function($id) use ($productController, $authMiddleware) {
+    if ($authMiddleware->requireAdmin()) {
+        $productController->updateProduct($id);
     }
 });
 Flight::route('PUT /api/products/@id', function($id) use ($productController, $authMiddleware) {
