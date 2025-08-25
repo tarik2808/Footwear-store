@@ -35,6 +35,8 @@ class OrderService {
             $order->shipping_zip = $shippingZip;
             $order->payment_method = $paymentMethod;
             $order->items = $cartItems;
+            $order->shipping_state = ''; // Default empty
+            $order->shipping_country = 'United States'; // Default
 
             // Create order
             $orderId = $this->orderDAO->create($order);
@@ -102,25 +104,9 @@ class OrderService {
                 throw new Exception("Unauthorized to update this order");
             }
 
-            // Update status
+            // Update status (stock will be updated automatically in DAO if status is "shipped")
             if (!$this->orderDAO->updateStatus($orderId, $status, $userId)) {
                 throw new Exception("Failed to update order status");
-            }
-
-            // Decrement product stock if status is shipped
-            if (strtolower($status) === 'shipped') {
-                error_log('DEBUG: OrderService updateOrderStatus - full order: ' . print_r($order, true));
-                $orderItems = $order['items'] ?? [];
-                error_log('DEBUG: OrderService updateOrderStatus - order[items]: ' . print_r($orderItems, true));
-                foreach ($orderItems as $item) {
-                    $productId = $item['product_id'] ?? null;
-                    $quantity = $item['quantity'] ?? 1;
-                    error_log("DEBUG: OrderService updateOrderStatus - Updating stock for productId=$productId, quantity=$quantity");
-                    if ($productId && $quantity) {
-                        $result = $this->productDAO->updateStock($productId, $quantity);
-                        error_log("DEBUG: updateStock result for productId=$productId: " . var_export($result, true));
-                    }
-                }
             }
 
             return $this->getOrder($orderId);

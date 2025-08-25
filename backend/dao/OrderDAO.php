@@ -20,10 +20,14 @@ class OrderDAO {
             throw new Exception("Order must contain items");
         }
         foreach ($order->items as $item) {
-            if (empty($item->product_id)) {
+            // Handle both array and object access
+            $productId = is_array($item) ? $item['product_id'] : $item->product_id;
+            $quantity = is_array($item) ? $item['quantity'] : $item->quantity;
+            
+            if (empty($productId)) {
                 throw new Exception("Product ID is required for all items");
             }
-            if (!is_numeric($item->quantity) || $item->quantity <= 0) {
+            if (!is_numeric($quantity) || $quantity <= 0) {
                 throw new Exception("Quantity must be a positive number for all items");
             }
         }
@@ -33,54 +37,67 @@ class OrderDAO {
     // Create new order with transaction
     public function create($order) {
         try {
-            $this->validateOrder($order);
+            // Handle Flight Collection object
+            if (is_object($order) && method_exists($order, 'getData')) {
+                $orderData = $order->getData();
+            } else {
+                $orderData = $order;
+            }
+            
+            // Validate the converted data
+            $this->validateOrder($orderData);
             
             $this->conn->beginTransaction();
             
-            // Calculate total price and check stock
+            // Calculate total price and check stock availability
             $total_price = 0;
-            foreach ($order->items as $item) {
-                // Get product price and check stock
+            foreach ($orderData->items as $item) {
+                // Get product price and check stock availability
+                $productId = is_array($item) ? $item['product_id'] : $item->product_id;
+                $quantity = is_array($item) ? $item['quantity'] : $item->quantity;
+                
                 $query = "SELECT price, stock FROM products WHERE id = :id FOR UPDATE";
                 $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(":id", $item->product_id);
+                $stmt->bindParam(":id", $productId);
                 $stmt->execute();
                 
                 $product = $stmt->fetch();
                 if (!$product) {
-                    throw new Exception("Product not found: " . $item->product_id);
+                    throw new Exception("Product not found: " . $productId);
                 }
-                if ($product['stock'] < $item->quantity) {
-                    throw new Exception("Insufficient stock for product: " . $item->product_id);
+                if ($product['stock'] < $quantity) {
+                    throw new Exception("Insufficient stock for product: " . $productId);
                 }
                 
-                $total_price += $product['price'] * $item->quantity;
+                $total_price += $product['price'] * $quantity;
                 
-                // Update stock
-                $query = "UPDATE products 
-                         SET stock = stock - :quantity 
-                         WHERE id = :id";
-                $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(":quantity", $item->quantity);
-                $stmt->bindParam(":id", $item->product_id);
-                if (!$stmt->execute()) {
-                    throw new Exception("Failed to update stock");
-                }
+                // Note: Stock will be updated when order status changes to "shipped"
+                // This ensures stock is only reduced after admin approval
             }
+            
+            // Generate unique order number
+            $orderNumber = 'ORD-' . date('Ymd') . '-' . str_pad($orderData->user_id, 4, '0', STR_PAD_LEFT) . '-' . time();
             
             // Create order
             $query = "INSERT INTO " . $this->table_name . " 
-                     (user_id, total_price, status, shipping_name, shipping_address, shipping_phone, shipping_city, shipping_zip) 
-                     VALUES (:user_id, :total_price, 'pending', :shipping_name, :shipping_address, :shipping_phone, :shipping_city, :shipping_zip)";
+                     (user_id, order_number, total_price, subtotal, status, payment_method, shipping_name, shipping_address, shipping_phone, shipping_city, shipping_zip, shipping_state, shipping_country) 
+                     VALUES (:user_id, :order_number, :total_price, :subtotal, 'pending', :payment_method, :shipping_name, :shipping_address, :shipping_phone, :shipping_city, :shipping_zip, :shipping_state, :shipping_country)";
             
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(":user_id", $order->user_id);
+            $stmt->bindParam(":user_id", $orderData->user_id);
+            $stmt->bindParam(":order_number", $orderNumber);
             $stmt->bindParam(":total_price", $total_price);
-            $stmt->bindParam(":shipping_name", $order->shipping_name);
-            $stmt->bindParam(":shipping_address", $order->shipping_address);
-            $stmt->bindParam(":shipping_phone", $order->shipping_phone);
-            $stmt->bindParam(":shipping_city", $order->shipping_city);
-            $stmt->bindParam(":shipping_zip", $order->shipping_zip);
+            $stmt->bindParam(":subtotal", $total_price); // For now, subtotal = total_price
+            $stmt->bindParam(":payment_method", $orderData->payment_method);
+            $stmt->bindParam(":shipping_name", $orderData->shipping_name);
+            $stmt->bindParam(":shipping_address", $orderData->shipping_address);
+            $stmt->bindParam(":shipping_phone", $orderData->shipping_phone);
+            $stmt->bindParam(":shipping_city", $orderData->shipping_city);
+            $stmt->bindParam(":shipping_zip", $orderData->shipping_zip);
+            $shippingState = $orderData->shipping_state ?? '';
+            $shippingCountry = $orderData->shipping_country ?? 'United States';
+            $stmt->bindParam(":shipping_state", $shippingState);
+            $stmt->bindParam(":shipping_country", $shippingCountry);
             
             if (!$stmt->execute()) {
                 throw new Exception("Failed to create order");
@@ -89,16 +106,25 @@ class OrderDAO {
             $order_id = $this->conn->lastInsertId();
             
             // Create order items
-            foreach ($order->items as $item) {
+            foreach ($orderData->items as $item) {
+                $productId = is_array($item) ? $item['product_id'] : $item->product_id;
+                $quantity = is_array($item) ? $item['quantity'] : $item->quantity;
+                $productName = is_array($item) ? ($item['product_name'] ?? 'Unknown Product') : ($item->product_name ?? 'Unknown Product');
+                $price = is_array($item) ? $item['price'] : $item->price;
+                $size = is_array($item) ? ($item['size'] ?? '') : ($item->size ?? '');
+                
                 $query = "INSERT INTO " . $this->items_table . " 
-                         (order_id, product_id, quantity, price) 
-                         VALUES (:order_id, :product_id, :quantity, 
-                                (SELECT price FROM products WHERE id = :product_id))";
+                         (order_id, product_id, product_name, product_price, quantity, selected_size) 
+                         VALUES (:order_id, :product_id, :product_name, :product_price, :quantity, :selected_size)";
                 
                 $stmt = $this->conn->prepare($query);
                 $stmt->bindParam(":order_id", $order_id);
-                $stmt->bindParam(":product_id", $item->product_id);
-                $stmt->bindParam(":quantity", $item->quantity);
+                $stmt->bindParam(":product_id", $productId);
+                $stmt->bindParam(":product_name", $productName);
+                $productPrice = floatval($price);
+                $stmt->bindParam(":product_price", $productPrice);
+                $stmt->bindParam(":quantity", $quantity);
+                $stmt->bindParam(":selected_size", $size);
                 
                 if (!$stmt->execute()) {
                     throw new Exception("Failed to create order item");
@@ -108,13 +134,15 @@ class OrderDAO {
             // Clear user's cart if successful
             $query = "DELETE FROM cart WHERE user_id = :user_id";
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(":user_id", $order->user_id);
+            $stmt->bindParam(":user_id", $orderData->user_id);
             $stmt->execute();
             
             $this->conn->commit();
             return $order_id;
         } catch (Exception $e) {
-            $this->conn->rollBack();
+            if ($this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
             error_log("Order creation error: " . $e->getMessage());
             throw $e;
         }
@@ -162,10 +190,36 @@ class OrderDAO {
             }
             $stmt->execute();
             
-            return $stmt->fetchAll();
+            $orders = $stmt->fetchAll();
+            
+            // For each order, get the items with product images
+            foreach ($orders as &$order) {
+                $order['items'] = $this->getOrderItemsWithImages($order['id']);
+            }
+            
+            return $orders;
         } catch (Exception $e) {
             error_log("Error reading orders: " . $e->getMessage());
             throw new Exception("Error reading orders");
+        }
+    }
+    
+    // Get order items with product images
+    private function getOrderItemsWithImages($orderId) {
+        try {
+            $query = "SELECT oi.*, p.image 
+                     FROM " . $this->items_table . " oi
+                     LEFT JOIN products p ON oi.product_id = p.id
+                     WHERE oi.order_id = :order_id";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":order_id", $orderId);
+            $stmt->execute();
+            
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            error_log("Error getting order items with images: " . $e->getMessage());
+            return [];
         }
     }
 
@@ -188,9 +242,8 @@ class OrderDAO {
             }
             
             // Get order items
-            $query = "SELECT oi.*, p.name as product_name 
+            $query = "SELECT oi.*, oi.product_name, oi.product_price, oi.selected_size
                      FROM " . $this->items_table . " oi
-                     JOIN products p ON oi.product_id = p.id
                      WHERE oi.order_id = :order_id";
             
             $stmt = $this->conn->prepare($query);
@@ -244,6 +297,10 @@ class OrderDAO {
             $stmt->bindParam(":id", $id);
 
             if($stmt->execute()) {
+                // If status is being changed to "shipped", update product stock
+                if (strtolower($status) === 'shipped') {
+                    $this->updateStockForShippedOrder($id);
+                }
                 return true;
             }
             return false;
@@ -296,27 +353,36 @@ class OrderDAO {
         }
     }
 
-    // Get user's order history
-    public function getUserOrders($user_id, $page = 1, $limit = 10) {
+
+    
+    // Update stock when order is marked as shipped
+    private function updateStockForShippedOrder($orderId) {
         try {
-            $offset = ($page - 1) * $limit;
-            $query = "SELECT o.*, 
-                            (SELECT COUNT(*) FROM " . $this->items_table . " WHERE order_id = o.id) as items_count 
-                     FROM " . $this->table_name . " o
-                     WHERE o.user_id = :user_id 
-                     ORDER BY o.created_at DESC 
-                     LIMIT :limit OFFSET :offset";
-            
+            // Get order items
+            $query = "SELECT product_id, quantity FROM " . $this->items_table . " WHERE order_id = :order_id";
             $stmt = $this->conn->prepare($query);
-            $stmt->bindParam(":user_id", $user_id);
-            $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
-            $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
+            $stmt->bindParam(":order_id", $orderId);
             $stmt->execute();
             
-            return $stmt->fetchAll();
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Update stock for each item
+            foreach ($items as $item) {
+                $query = "UPDATE products 
+                         SET stock = stock - :quantity 
+                         WHERE id = :product_id";
+                $stmt = $this->conn->prepare($query);
+                $stmt->bindParam(":quantity", $item['quantity']);
+                $stmt->bindParam(":product_id", $item['product_id']);
+                
+                if (!$stmt->execute()) {
+                    error_log("Failed to update stock for product ID: " . $item['product_id']);
+                }
+            }
+            
+            error_log("Stock updated for shipped order ID: " . $orderId);
         } catch (Exception $e) {
-            error_log("Error getting user orders: " . $e->getMessage());
-            throw new Exception("Error getting user orders");
+            error_log("Error updating stock for shipped order: " . $e->getMessage());
         }
     }
 }

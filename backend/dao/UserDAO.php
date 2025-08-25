@@ -12,7 +12,7 @@ class UserDAO {
 
     // Create new user
     public function create($user) {
-        $query = "INSERT INTO " . $this->table_name . " (name, email, password, role, status) VALUES (:name, :email, :password, :role, :status)";
+        $query = "INSERT INTO " . $this->table_name . " (name, email, password, role, is_active) VALUES (:name, :email, :password, :role, :is_active)";
         $stmt = $this->conn->prepare($query);
 
         // Sanitize and bind
@@ -20,7 +20,7 @@ class UserDAO {
         $stmt->bindParam(":email", $user->email);
         $stmt->bindParam(":password", $user->password);
         $stmt->bindParam(":role", $user->role);
-        $stmt->bindParam(":status", $user->status);
+        $stmt->bindParam(":is_active", $user->is_active);
 
         if($stmt->execute()) {
             // Fetch the newly created user
@@ -73,26 +73,105 @@ class UserDAO {
 
     // Update user
     public function update($user) {
-        $query = "UPDATE " . $this->table_name . " 
-                 SET name = :name, email = :email, password = :password, role = :role, status = :status 
-                 WHERE id = :id";
+        $setParts = [];
+        $params = [];
+        
+        // Build dynamic SET clause based on provided fields
+        if (isset($user->name)) {
+            $setParts[] = "name = :name";
+            $params[':name'] = $user->name;
+        }
+        if (isset($user->email)) {
+            $setParts[] = "email = :email";
+            $params[':email'] = $user->email;
+        }
+        if (isset($user->password) && !empty($user->password)) {
+            $setParts[] = "password = :password";
+            $params[':password'] = $user->password;
+        }
+        // Only allow role updates for admin operations (handled separately)
+        // if (isset($user->role)) {
+        //     $setParts[] = "role = :role";
+        //     $params[':role'] = $user->role;
+        // }
+        if (isset($user->is_active)) {
+            $setParts[] = "is_active = :is_active";
+            $params[':is_active'] = $user->is_active;
+        }
+        
+        // Add updated_at timestamp
+        $setParts[] = "updated_at = CURRENT_TIMESTAMP";
+        
+        if (empty($setParts)) {
+            return false; // No fields to update
+        }
+        
+        $query = "UPDATE " . $this->table_name . " SET " . implode(', ', $setParts) . " WHERE id = :id";
+        $params[':id'] = $user->id;
+        
+                $stmt = $this->conn->prepare($query);
+        
+        // Bind all parameters
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        
+        if($stmt->execute()) {
+            return true;
+        }
+                return false;
+    }
+    
+    // Admin update user (can change role and other admin fields)
+    public function adminUpdate($user) {
+        $setParts = [];
+        $params = [];
+        
+        // Build dynamic SET clause based on provided fields
+        if (isset($user->name)) {
+            $setParts[] = "name = :name";
+            $params[':name'] = $user->name;
+        }
+        if (isset($user->email)) {
+            $setParts[] = "email = :email";
+            $params[':email'] = $user->email;
+        }
+        if (isset($user->password) && !empty($user->password)) {
+            $setParts[] = "password = :password";
+            $params[':password'] = $user->password;
+        }
+        if (isset($user->role)) {
+            $setParts[] = "role = :role";
+            $params[':role'] = $user->role;
+        }
+        if (isset($user->is_active)) {
+            $setParts[] = "is_active = :is_active";
+            $params[':is_active'] = $user->is_active;
+        }
+        
+        // Add updated_at timestamp
+        $setParts[] = "updated_at = CURRENT_TIMESTAMP";
+        
+        if (empty($setParts)) {
+            return false; // No fields to update
+        }
+        
+        $query = "UPDATE " . $this->table_name . " SET " . implode(', ', $setParts) . " WHERE id = :id";
+        $params[':id'] = $user->id;
         
         $stmt = $this->conn->prepare($query);
-
-        // Sanitize and bind
-        $stmt->bindParam(":name", $user->name);
-        $stmt->bindParam(":email", $user->email);
-        $stmt->bindParam(":password", $user->password);
-        $stmt->bindParam(":role", $user->role);
-        $stmt->bindParam(":status", $user->status);
-        $stmt->bindParam(":id", $user->id);
-
+        
+        // Bind all parameters
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        
         if($stmt->execute()) {
             return true;
         }
         return false;
     }
-
+    
     // Delete user
     public function delete($id) {
         $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";

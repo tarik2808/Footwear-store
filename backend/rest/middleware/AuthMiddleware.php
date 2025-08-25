@@ -21,7 +21,7 @@ class AuthMiddleware {
             error_log('DEBUG: Token: ' . $token);
             $userData = $this->authService->verifyToken($token);
             error_log('DEBUG: userData: ' . print_r($userData, true));
-            if (!$userData) {
+            if (!$userData || !$userData['valid']) {
                 throw new Exception('Invalid token');
             }
             Flight::set('user', [
@@ -64,7 +64,7 @@ class AuthMiddleware {
             $userData = $this->authService->verifyToken($token);
             error_log('DEBUG: userData: ' . print_r($userData, true));
             
-            if (!$userData) {
+            if (!$userData || !$userData['valid']) {
                 error_log('DEBUG: Invalid token');
                 Flight::json([
                     'error' => 'Unauthorized',

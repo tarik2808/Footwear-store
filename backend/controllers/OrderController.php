@@ -14,11 +14,35 @@ class OrderController extends BaseController {
         try {
             $user = Flight::get('user');
             $userId = $user['id'];
+            
+            // Try to get data from Flight first
             $data = Flight::request()->data;
-            error_log('DEBUG: OrderController createOrder - data: ' . print_r($data, true));
-            $this->validateRequiredFields($data, ['shipping_name', 'shipping_address', 'shipping_phone', 'shipping_city', 'shipping_zip', 'payment_method', 'cart_items']);
-            if (!isset($data->cart_items) || !is_array($data->cart_items) || count($data->cart_items) === 0) {
-                throw new Exception('cart_items must be a non-empty array');
+            error_log('DEBUG: Flight request data: ' . print_r($data, true));
+            
+            // If Flight data is empty, manually read the request body
+            if (empty($data)) {
+                error_log('DEBUG: Flight data is empty, manually reading request body');
+                $rawInput = file_get_contents('php://input');
+                error_log('DEBUG: Raw input: ' . $rawInput);
+                
+                if (!empty($rawInput)) {
+                    $data = json_decode($rawInput);
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        error_log('DEBUG: Successfully parsed JSON manually');
+                    } else {
+                        error_log('DEBUG: JSON parse error: ' . json_last_error_msg());
+                        throw new Exception('Invalid JSON data: ' . json_last_error_msg());
+                    }
+                } else {
+                    error_log('DEBUG: No raw input available');
+                    throw new Exception('No request body received');
+                }
+            }
+            
+            error_log('DEBUG: Final data: ' . print_r($data, true));
+            $this->validateRequiredFields($data, ['shipping_name', 'shipping_address', 'shipping_phone', 'shipping_city', 'shipping_zip', 'payment_method', 'items']);
+            if (!isset($data->items) || !is_array($data->items) || count($data->items) === 0) {
+                throw new Exception('items must be a non-empty array');
             }
             $order = $this->orderService->createOrder(
                 $userId,
@@ -28,7 +52,7 @@ class OrderController extends BaseController {
                 $data->shipping_city,
                 $data->shipping_zip,
                 $data->payment_method,
-                $data->cart_items
+                $data->items
             );
             $this->sendResponse($order, 201);
         } catch (Exception $e) {

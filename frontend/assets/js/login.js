@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
             try {
                 console.log('Attempting to login with:', { email });
                 
-                const response = await fetch('http://localhost:8080/FootwearStore%20Tarik%20Coralic/backend/api.php/login', {
+                const response = await fetch('http://localhost:8080/FootwearStore%20Tarik%20Coralic/backend/rest/api/users/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -31,7 +31,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 const data = await response.json();
                 console.log('Response data:', data);
   
-                if (data.success) {
+                // Backend returns {token, user} format
+                if (data.token && data.user) {
                     // Store minimal user info in localStorage for admin checks
                     const userObj = {
                         id: data.user.id,
@@ -41,14 +42,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     };
                     localStorage.setItem('loggedInUser', JSON.stringify(userObj));
                     localStorage.setItem('user', JSON.stringify(userObj)); // For cart and other logic
-                    // Store JWT token for API authentication if present
-                    if (data.token) {
-                        localStorage.setItem('token', data.token);
-                    }
+                    localStorage.setItem('token', data.token); // Store JWT token for API authentication
+                    
                     alert(`Welcome, ${data.user.name}! Redirecting...`);
                     window.location.href = data.user.role === 'admin' ? 'admin-dashboard.html' : '../index.html';
                 } else {
-                    alert(data.message || 'Invalid email or password. Please try again.');
+                    alert('Invalid response from server. Please try again.');
                 }
             } catch (error) {
                 console.error('Login error details:', {

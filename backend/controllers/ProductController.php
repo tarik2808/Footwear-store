@@ -16,19 +16,29 @@ class ProductController extends BaseController {
             if ($user['role'] !== 'admin') {
                 throw new Exception("Unauthorized");
             }
-            $data = Flight::request()->data;
-            // Handle file upload
-            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = dirname(__DIR__) . '/uploads/';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
+            
+            // Handle both FormData and JSON requests
+            $data = [];
+            if ($_SERVER['CONTENT_TYPE'] && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false) {
+                // FormData request
+                $data = $_POST;
+                // Handle file upload
+                if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                    $uploadDir = dirname(__DIR__) . '/uploads/';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+                    $filename = uniqid() . '_' . basename($_FILES['image']['name']);
+                    $targetFile = $uploadDir . $filename;
+                    if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
+                        $data['image'] = 'uploads/' . $filename;
+                    }
                 }
-                $filename = uniqid() . '_' . basename($_FILES['image']['name']);
-                $targetFile = $uploadDir . $filename;
-                if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
-                    $data['image'] = 'uploads/' . $filename;
-                }
+            } else {
+                // JSON request
+                $data = Flight::request()->data->getData();
             }
+            
             $this->validateRequiredFields($data, ['name', 'description', 'price', 'category_id']);
             
             $product = $this->productService->createProduct($data);
@@ -66,19 +76,29 @@ class ProductController extends BaseController {
             if ($user['role'] !== 'admin') {
                 throw new Exception("Unauthorized");
             }
-            $data = Flight::request()->data;
-            // Handle file upload
-            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-                $uploadDir = dirname(__DIR__) . '/uploads/';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0777, true);
+            
+            // Handle both FormData and JSON requests
+            $data = [];
+            if ($_SERVER['CONTENT_TYPE'] && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false) {
+                // FormData request
+                $data = $_POST;
+                // Handle file upload
+                if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                    $uploadDir = dirname(__DIR__) . '/uploads/';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0777, true);
+                    }
+                    $filename = uniqid() . '_' . basename($_FILES['image']['name']);
+                    $targetFile = $uploadDir . $filename;
+                    if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
+                        $data['image'] = 'uploads/' . $filename;
+                    }
                 }
-                $filename = uniqid() . '_' . basename($_FILES['image']['name']);
-                $targetFile = $uploadDir . $filename;
-                if (move_uploaded_file($_FILES['image']['tmp_name'], $targetFile)) {
-                    $data['image'] = 'uploads/' . $filename;
-                }
+            } else {
+                // JSON request
+                $data = Flight::request()->data->getData();
             }
+            
             $product = $this->productService->updateProduct($id, $data);
             $this->sendResponse($product);
         } catch (Exception $e) {

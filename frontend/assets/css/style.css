@@ -1038,3 +1038,101 @@ button[type="submit"]:hover {
     90% { opacity: 1; transform: translateY(0); }
     100% { opacity: 0; transform: translateY(-20px); }
 }
+
+/* ======================= */
+/* User Profile Order Items */
+/* ======================= */
+.order-items {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.order-items h5 {
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 0.9rem;
+}
+
+.item-name {
+    font-weight: 500;
+    color: var(--text-color);
+    flex: 2;
+}
+
+.item-size, .item-quantity {
+    color: #666;
+    flex: 1;
+    text-align: center;
+}
+
+.item-price {
+    color: var(--primary-color);
+    font-weight: bold;
+    flex: 1;
+    text-align: right;
+}
+
+/* ======================= */
+/* Order Status Colors */
+/* ======================= */
+.status.pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status.processing {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.status.shipped {
+    background-color: #28a745;
+    color: white;
+}
+
+.status.delivered {
+    background-color: #6c757d;
+    color: white;
+}
+
+.status.cancelled {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* ======================= */
+/* Refresh Button */
+/* ======================= */
+.refresh-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.refresh-btn:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+}

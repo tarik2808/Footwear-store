@@ -2,8 +2,8 @@ import orderService from '../../services/orderService.js';
 
 document.addEventListener("DOMContentLoaded", function () {
     // Check if the user is an admin
-    const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
-    if (!loggedInUser || loggedInUser.role !== 'admin') {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || user.role !== 'admin') {
         alert("You must be logged in as an admin to view this page.");
         window.location.href = "login.html"; // Redirect to login page if not admin
         return;
@@ -15,10 +15,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Function to load orders from localStorage and display them in cards
 async function loadOrders() {
+    console.log('loadOrders called');
     const ordersList = document.getElementById("orders-list");
     ordersList.innerHTML = "";
     try {
+        console.log('Calling orderService.getOrders()');
         const result = await orderService.getOrders();
+        console.log('orderService result:', result);
         const orders = result.orders || [];
         if (orders.length === 0) {
             ordersList.innerHTML = "<p>No orders available.</p>";
@@ -59,26 +62,30 @@ async function loadOrders() {
             // Order Products
             const productsSection = document.createElement("div");
             productsSection.classList.add("order-products");
-            if (order.cartItems && order.cartItems.length > 0) {
+            if (order.items && order.items.length > 0) {
+                console.log('Order items found:', order.items);
                 const productList = document.createElement("ul");
                 productList.classList.add("product-list");
-                order.cartItems.forEach(item => {
+                order.items.forEach(item => {
+                    console.log('Processing item:', item);
                     const listItem = document.createElement("li");
                     listItem.classList.add("product-item");
                     
                     // Create product image
                     const imgElement = document.createElement("img");
-                    imgElement.src = item.image ? item.image : "../assets/images/placeholder.png";
-                    imgElement.alt = item.name;
+                    const imagePath = item.image ? `../../backend/${item.image}` : "../assets/images/placeholder.png";
+                    console.log('Image path:', imagePath);
+                    imgElement.src = imagePath;
+                    imgElement.alt = item.product_name;
                     imgElement.classList.add("product-image");
                     
                     // Create product details
                     const detailsElement = document.createElement("div");
                     detailsElement.classList.add("product-details");
                     detailsElement.innerHTML = `
-                        <p class="product-name">${item.name}</p>
-                        <p class="product-info">Size: ${item.size}, Quantity: ${item.quantity}</p>
-                        <p class="product-price">$${(item.price * item.quantity).toFixed(2)}</p>
+                        <p class="product-name">${item.product_name}</p>
+                        <p class="product-info">Size: ${item.selected_size || 'N/A'}, Quantity: ${item.quantity}</p>
+                        <p class="product-price">$${(item.product_price * item.quantity).toFixed(2)}</p>
                     `;
                     
                     listItem.appendChild(imgElement);
