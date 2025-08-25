@@ -15,147 +15,214 @@ require_once dirname(__DIR__) . '/controllers/CartController.php';
 require_once dirname(__DIR__) . '/controllers/OrderController.php';
 require_once dirname(__DIR__) . '/rest/middleware/AuthMiddleware.php';
 
-// Initialize controllers and middleware
-$userController = new UserController();
-$productController = new ProductController();
-$categoryController = new CategoryController();
-$cartController = new CartController();
-$orderController = new OrderController();
+// Initialize middleware only (controllers will be created when needed)
 $authMiddleware = new AuthMiddleware();
 
 // User routes
-Flight::route('POST /api/users/register', [$userController, 'register']);
-Flight::route('POST /api/users/login', [$userController, 'login']);
-Flight::route('GET /api/users/profile', [$userController, 'getProfile'], true, [$authMiddleware, 'authenticate']);
-Flight::route('PUT /api/users/profile', [$userController, 'updateProfile'], true, [$authMiddleware, 'authenticate']);
-Flight::route('DELETE /api/users/profile', [$userController, 'deleteAccount'], true, [$authMiddleware, 'authenticate']);
-Flight::route('DELETE /api/users/@id', function($id) use ($userController, $authMiddleware) {
-    if ($authMiddleware->requireAdmin()) {
-        $userController->deleteUser($id);
+Flight::route('POST /api/users/register', function() {
+    $controller = new UserController();
+    $controller->register();
+});
+Flight::route('POST /api/users/login', function() {
+    $controller = new UserController();
+    $controller->login();
+});
+Flight::route('GET /api/users/profile', function() use ($authMiddleware) {
+    if ($authMiddleware->authenticate()) {
+        $controller = new UserController();
+        $controller->getProfile();
     }
 });
-Flight::route('PUT /api/users/@id', function($id) use ($userController, $authMiddleware) {
-    if ($authMiddleware->requireAdmin()) {
-        $userController->updateUser($id);
+Flight::route('PUT /api/users/profile', function() use ($authMiddleware) {
+    if ($authMiddleware->authenticate()) {
+        $controller = new UserController();
+        $controller->updateProfile();
     }
 });
-Flight::route('PUT /api/users/@id/password', function($id) use ($userController, $authMiddleware) {
+Flight::route('DELETE /api/users/profile', function() use ($authMiddleware) {
+    if ($authMiddleware->authenticate()) {
+        $controller = new UserController();
+        $controller->deleteAccount();
+    }
+});
+Flight::route('DELETE /api/users/@id', function($id) use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $userController->updateUserPassword($id);
+        $controller = new UserController();
+        $controller->deleteUser($id);
+    }
+});
+Flight::route('PUT /api/users/@id', function($id) use ($authMiddleware) {
+    if ($authMiddleware->requireAdmin()) {
+        $controller = new UserController();
+        $controller->updateUser($id);
+    }
+});
+Flight::route('PUT /api/users/@id/password', function($id) use ($authMiddleware) {
+    if ($authMiddleware->requireAdmin()) {
+        $controller = new UserController();
+        $controller->updateUserPassword($id);
     }
 });
 
 // Admin routes
-Flight::route('GET /api/users', function() use ($userController, $authMiddleware) {
+Flight::route('GET /api/users', function() use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $userController->listUsers();
+        $controller = new UserController();
+        $controller->listUsers();
     }
 });
 
 // Product routes
-Flight::route('GET /api/products/@id', [$productController, 'getProduct']);
-Flight::route('GET /api/products', [$productController, 'listProducts']);
+Flight::route('GET /api/products/@id', function($id) {
+    $controller = new ProductController();
+    $controller->getProduct($id);
+});
+Flight::route('GET /api/products', function() {
+    $controller = new ProductController();
+    $controller->listProducts();
+});
 
 // Admin product routes
-Flight::route('POST /api/products', function() use ($productController, $authMiddleware) {
+Flight::route('POST /api/products', function() use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $productController->createProduct();
+        $controller = new ProductController();
+        $controller->createProduct();
     }
 });
-Flight::route('POST /api/products/@id', function($id) use ($productController, $authMiddleware) {
+Flight::route('POST /api/products/@id', function($id) use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $productController->updateProduct($id);
+        $controller = new ProductController();
+        $controller->updateProduct($id);
     }
 });
-Flight::route('PUT /api/products/@id', function($id) use ($productController, $authMiddleware) {
+Flight::route('PUT /api/products/@id', function($id) use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $productController->updateProduct($id);
+        $controller = new ProductController();
+        $controller->updateProduct($id);
     }
 });
-Flight::route('DELETE /api/products/@id', function($id) use ($productController, $authMiddleware) {
+Flight::route('DELETE /api/products/@id', function($id) use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $productController->deleteProduct($id);
+        $controller = new ProductController();
+        $controller->deleteProduct($id);
     }
 });
-Flight::route('PUT /api/products/@id/stock', function($id) use ($productController, $authMiddleware) {
+Flight::route('PUT /api/products/@id/stock', function($id) use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $productController->updateStock($id);
+        $controller = new ProductController();
+        $controller->updateStock($id);
     }
 });
-Flight::route('POST /api/products/bulk', function() use ($productController, $authMiddleware) {
+Flight::route('POST /api/products/bulk', function() use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $productController->bulkCreateProducts();
+        $controller = new ProductController();
+        $controller->bulkCreateProducts();
     }
 });
-Flight::route('PUT /api/products/bulk', function() use ($productController, $authMiddleware) {
+Flight::route('PUT /api/products/bulk', function() use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $productController->bulkUpdateProducts();
+        $controller = new ProductController();
+        $controller->bulkUpdateProducts();
     }
 });
 
 // Category routes
-Flight::route('GET /api/categories/@id', [$categoryController, 'getCategory']);
-Flight::route('GET /api/categories', [$categoryController, 'listCategories']);
-Flight::route('GET /api/categories/with-products', [$categoryController, 'getCategoriesWithProductCount']);
+Flight::route('GET /api/categories/@id', function($id) {
+    $controller = new CategoryController();
+    $controller->getCategory($id);
+});
+Flight::route('GET /api/categories', function() {
+    $controller = new CategoryController();
+    $controller->listCategories();
+});
+Flight::route('GET /api/categories/with-products', function() {
+    $controller = new CategoryController();
+    $controller->getCategoriesWithProductCount();
+});
 
 // Admin category routes
-Flight::route('POST /api/categories', function() use ($categoryController, $authMiddleware) {
+Flight::route('POST /api/categories', function() use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $categoryController->createCategory();
+        $controller = new CategoryController();
+        $controller->createCategory();
     }
 });
-Flight::route('PUT /api/categories/@id', function($id) use ($categoryController, $authMiddleware) {
+Flight::route('PUT /api/categories/@id', function($id) use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $categoryController->updateCategory($id);
+        $controller = new CategoryController();
+        $controller->updateCategory($id);
     }
 });
-Flight::route('DELETE /api/categories/@id', function($id) use ($categoryController, $authMiddleware) {
+Flight::route('DELETE /api/categories/@id', function($id) use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $categoryController->deleteCategory($id);
+        $controller = new CategoryController();
+        $controller->deleteCategory($id);
     }
 });
 
 // Cart routes
-Flight::route('POST /api/cart/items', function() use ($cartController, $authMiddleware) {
+Flight::route('POST /api/cart/items', function() use ($authMiddleware) {
     if ($authMiddleware->authenticate()) {
-        $cartController->addToCart();
+        $controller = new CartController();
+        $controller->addToCart();
     }
 });
-Flight::route('GET /api/cart', function() use ($cartController, $authMiddleware) {
+Flight::route('GET /api/cart', function() use ($authMiddleware) {
     if ($authMiddleware->authenticate()) {
-        $cartController->getCart();
+        $controller = new CartController();
+        $controller->getCart();
     }
 });
-Flight::route('PUT /api/cart/items/@id', function($id) use ($cartController, $authMiddleware) {
+Flight::route('PUT /api/cart/items/@id', function($id) use ($authMiddleware) {
     if ($authMiddleware->authenticate()) {
-        $cartController->updateQuantity($id);
+        $controller = new CartController();
+        $controller->updateQuantity($id);
     }
 });
-Flight::route('DELETE /api/cart/items/@id', function($id) use ($cartController, $authMiddleware) {
+Flight::route('DELETE /api/cart/items/@id', function($id) use ($authMiddleware) {
     if ($authMiddleware->authenticate()) {
-        $cartController->removeItem($id);
+        $controller = new CartController();
+        $controller->removeItem($id);
     }
 });
-Flight::route('DELETE /api/cart', function() use ($cartController, $authMiddleware) {
+Flight::route('DELETE /api/cart', function() use ($authMiddleware) {
     if ($authMiddleware->authenticate()) {
-        $cartController->clearCart();
+        $controller = new CartController();
+        $controller->clearCart();
     }
 });
 
 // Order routes
-Flight::route('POST /api/orders', [$orderController, 'createOrder'], true, [$authMiddleware, 'authenticate']);
-Flight::route('GET /api/orders/@id', [$orderController, 'getOrder'], true, [$authMiddleware, 'authenticate']);
-Flight::route('GET /api/orders/user', [$orderController, 'getUserOrders'], true, [$authMiddleware, 'authenticate']);
-
-// Admin order routes
-Flight::route('GET /api/orders', function() use ($orderController, $authMiddleware) {
-    if ($authMiddleware->requireAdmin()) {
-        $orderController->listOrders();
+Flight::route('POST /api/orders', function() use ($authMiddleware) {
+    if ($authMiddleware->authenticate()) {
+        $controller = new OrderController();
+        $controller->createOrder();
     }
 });
-Flight::route('PUT /api/orders/@id/status', function($id) use ($orderController, $authMiddleware) {
+Flight::route('GET /api/orders/@id', function($id) use ($authMiddleware) {
+    if ($authMiddleware->authenticate()) {
+        $controller = new OrderController();
+        $controller->getOrder($id);
+    }
+});
+Flight::route('GET /api/orders/user', function() use ($authMiddleware) {
+    if ($authMiddleware->authenticate()) {
+        $controller = new OrderController();
+        $controller->getUserOrders();
+    }
+});
+
+// Admin order routes
+Flight::route('GET /api/orders', function() use ($authMiddleware) {
     if ($authMiddleware->requireAdmin()) {
-        $orderController->updateOrderStatus($id);
+        $controller = new OrderController();
+        $controller->listOrders();
+    }
+});
+Flight::route('PUT /api/orders/@id/status', function($id) use ($authMiddleware) {
+    if ($authMiddleware->requireAdmin()) {
+        $controller = new OrderController();
+        $controller->updateOrderStatus($id);
     }
 });
 
@@ -167,4 +234,4 @@ Flight::map('error', function($ex) {
 
 // Start the application
 Flight::start();
-?> 
+?>

@@ -55,7 +55,21 @@ class AuthService {
     logout() {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = 'login.html';
+        
+        // Determine the correct path based on current location
+        const currentPath = window.location.pathname;
+        let loginPath;
+        
+        if (currentPath.includes('/pages/')) {
+            // We're in a pages subfolder, go up one level then into pages
+            loginPath = "../pages/login.html";
+        } else {
+            // We're in the root frontend folder
+            loginPath = "./pages/login.html";
+        }
+        
+        console.log("Auth.js logout - redirecting to:", loginPath);
+        window.location.href = loginPath;
     }
 
     isAuthenticated() {

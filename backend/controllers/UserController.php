@@ -125,7 +125,7 @@ class UserController extends BaseController {
                 throw new Exception("Unauthorized: Admin access required");
             }
             $data = json_decode(json_encode(Flight::request()->data->getData()));
-            $updatedUser = $this->userService->updateProfile($id, $data);
+            $updatedUser = $this->userService->adminUpdateUser($id, $data);
             $this->sendResponse($updatedUser);
         } catch (Exception $e) {
             $this->sendError($e->getMessage(), 400, $e);

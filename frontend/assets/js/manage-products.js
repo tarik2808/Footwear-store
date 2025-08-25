@@ -2,6 +2,7 @@ import productService from '../../services/productService.js';
 
 document.addEventListener("DOMContentLoaded", function () {
   const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  const token = localStorage.getItem("token");
 
   // Redirect non-admin users to the home page
   if (!loggedInUser || loggedInUser.role !== "admin") {
@@ -10,7 +11,13 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
   }
 
-  console.log("Admin dashboard loaded for:", loggedInUser.username);
+  if (!token) {
+      alert("Authentication token missing. Please login again.");
+      window.location.href = "login.html";
+      return;
+  }
+
+  console.log("Admin dashboard loaded for:", loggedInUser.name);
 
   // Delete duplicate Nike Air Max Tuned 1 product
   let products = JSON.parse(localStorage.getItem("products")) || [];

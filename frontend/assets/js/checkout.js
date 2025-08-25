@@ -55,6 +55,9 @@ function handleCheckoutForm(event) {
 
     // Retrieve cart items for the user
     const cart = JSON.parse(localStorage.getItem(`cart_${email}`)) || [];
+    
+    console.log('Cart data from localStorage:', cart);
+    console.log('User email:', email);
 
     if (cart.length === 0) {
         alert("Your cart is empty. Add items before proceeding to checkout.");
@@ -65,7 +68,9 @@ function handleCheckoutForm(event) {
     const cartItems = cart.map(item => ({
         product_id: item.id,
         quantity: item.quantity,
-        price: item.price
+        price: item.price,
+        product_name: item.name,
+        size: item.size
     }));
 
     // Order object to be sent to backend
@@ -76,23 +81,32 @@ function handleCheckoutForm(event) {
         shipping_city: city,
         shipping_zip: zipCode,
         payment_method: 'cash', // or get from form if you have payment method selection
-        cart_items: cartItems
+        items: cartItems
     };
 
     // Log the order payload for debugging
     console.log('Order payload:', order);
 
     // Send order to backend (replace with your API call)
+    const token = localStorage.getItem('token');
+    console.log('JWT Token:', token ? 'Present' : 'Missing');
+    console.log('Order payload being sent:', order);
+    
     fetch('http://localhost:8080/FootwearStore Tarik Coralic/backend/rest/api/orders', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(order)
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data);
         // Handle success (clear cart, show message, redirect, etc.)
         localStorage.removeItem(`cart_${email}`);
         localStorage.removeItem(`cartTotal_${email}`);
@@ -100,8 +114,8 @@ function handleCheckoutForm(event) {
         window.location.href = '../index.html';
     })
     .catch(error => {
+        console.error('Fetch error:', error);
         alert('Failed to place order. Please try again.');
-        console.error(error);
     });
 }
 
@@ -135,5 +149,19 @@ function displayCheckoutTotal() {
 // Function to logout
 function logout() {
     console.log("User logged out");
-    window.location.href = "login.html";
+    
+    // Determine the correct path based on current location
+    const currentPath = window.location.pathname;
+    let loginPath;
+    
+    if (currentPath.includes('/pages/')) {
+        // We're in a pages subfolder, go up one level then into pages
+        loginPath = "../pages/login.html";
+    } else {
+        // We're in the root frontend folder
+        loginPath = "./pages/login.html";
+    }
+    
+    console.log("Checkout.js logout - redirecting to:", loginPath);
+    window.location.href = loginPath;
 }

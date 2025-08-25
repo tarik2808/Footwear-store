@@ -77,8 +77,8 @@ class UserService {
 
             $data->password = password_hash($data->password, PASSWORD_DEFAULT);
             $data->role = 'user'; // Default role
-            if (!isset($data->status) || empty($data->status)) {
-                $data->status = 'active';
+            if (!isset($data->is_active)) {
+                $data->is_active = true;
             }
 
             return $this->userDAO->create($data);
@@ -135,8 +135,8 @@ class UserService {
             }
 
             $data->id = $userId;
-            if (!isset($data->status) || empty($data->status)) {
-                $data->status = 'active';
+            if (!isset($data->is_active)) {
+                $data->is_active = true;
             }
             $user = $this->userDAO->update($data);
             if (!$user) {
@@ -150,9 +150,45 @@ class UserService {
             return $user;
         } catch (Exception $e) {
             throw new Exception("Failed to update profile: " . $e->getMessage());
+                }
+    }
+    
+    // Admin update user (can change role and other admin fields)
+    public function adminUpdateUser($userId, $data) {
+        try {
+            $this->validateUser($data, true);
+            
+            if (isset($data->email) && $this->userDAO->emailExists($data->email, $userId)) {
+                throw new Exception("Email already exists");
+            }
+
+            if (isset($data->password) && !empty($data->password)) {
+                $data->password = password_hash($data->password, PASSWORD_DEFAULT);
+            } else {
+                if (is_array($data) && array_key_exists('password', $data)) {
+                    unset($data['password']);
+                } elseif (is_object($data) && property_exists($data, 'password')) {
+                    unset($data->password);
+                }
+            }
+
+            $data->id = $userId;
+            if (!isset($data->is_active)) {
+                $data->is_active = true;
+            }
+            
+            $user = $this->userDAO->adminUpdate($data);
+            if (!$user) {
+                throw new Exception("Failed to update user");
+            }
+            
+            // Return updated user data
+            return $this->userDAO->readOne($userId);
+        } catch (Exception $e) {
+            throw new Exception("Failed to update user: " . $e->getMessage());
         }
     }
-
+    
     // Delete user account
     public function deleteAccount($userId) {
         try {

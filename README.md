@@ -3,7 +3,7 @@
 A full-stack e-commerce application for selling footwear products.
 
 ## Live Demo
-[Footwear Store](https://your-deployment-url.com)
+[Footwear Store](https://ae02-109-175-39-138.ngrok-free.app/FootwearStore%20Tarik%20Coralic/frontend/index.html)
 
 ## Features
 - User authentication and authorization

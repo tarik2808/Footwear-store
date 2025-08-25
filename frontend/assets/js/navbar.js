@@ -35,15 +35,31 @@ document.addEventListener("DOMContentLoaded", function () {
     const adminDashboardBtn = document.getElementById("admin-dashboard-btn");
 
     // Get logged-in user info
-    const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+    const loggedInUser = JSON.parse(localStorage.getItem("user"));
 
     // Call the function to manage button visibility
     updateNavBar(loggedInUser);
 
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", function () {
-            localStorage.removeItem("loggedInUser");
-            window.location.href = "/frontend/pages/login.html"; 
+            if (logoutBtn) {
+            logoutBtn.addEventListener("click", function () {
+                console.log("Logout button clicked - redirecting to login page");
+                localStorage.removeItem("user");
+                localStorage.removeItem("token");
+            
+            // Determine the correct path based on current location
+            const currentPath = window.location.pathname;
+            let loginPath;
+            
+            if (currentPath.includes('/pages/')) {
+                // We're in a pages subfolder, go up one level then into pages
+                loginPath = "../pages/login.html";
+            } else {
+                // We're in the root frontend folder
+                loginPath = "./pages/login.html";
+            }
+            
+            console.log("Redirecting to:", loginPath);
+            window.location.href = loginPath;
         });
     }
 });
